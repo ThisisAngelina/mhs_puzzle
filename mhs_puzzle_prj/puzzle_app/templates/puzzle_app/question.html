@@ -1,0 +1,58 @@
+{% extends 'puzzle_app/layout.html' %}
+
+{% block body %}
+
+ <!-- present the user with the various error (danger) and success messages (alerts)-->
+ {% if messages %}
+   {% for message in messages %}
+     <p class="alert alert-{{ message.tags }}">{{ message }}<p>
+   {% endfor %}
+{% endif %}
+
+
+ <!-- progress bar -->
+ <div class="progress">
+    <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+</div>
+
+ <!-- questions -->
+
+{% if question %}
+    <div id="question-view">
+        <div id="question_title" style="font-size: 28px; font-weight: bold;">{{ question.title }}</div>
+        <div id="answer_options">
+            {% for choice in question.answer_choices %}
+                <button class="answer_button" data-score="{{ choice.score }}">{{ choice.answer_text }}</button>
+            {% endfor %}
+        </div> 
+    </div>
+{% else %}
+    <p>No more questions available.</p>
+{% endif %}
+
+<div class="buttons">
+    <button id="go_back">Go Back</button>
+    <button id="next">Next</button>
+</div>
+
+<script>
+    document.getElementById('next').addEventListener('click', function() {
+        // Load the next question
+        window.location.reload();
+    });
+
+    document.getElementById('go_back').addEventListener('click', function() {
+        // Go back to the previous question
+        // Implement logic to handle going back if needed
+    });
+
+    document.querySelectorAll('.answer_button').forEach(button => {
+        button.addEventListener('click', function() {
+            const score = this.getAttribute('data-score');
+            console.log('Selected score:', score);
+            // Handle answer selection logic here
+        });
+    });
+</script>
+
+{% endblock %}
