@@ -81,7 +81,7 @@ class Answer(models.Model):
         unique_together = ('question', 'answer_text')
 
     def __str__(self):
-        return f"Answer to '{self.question}': {self.answer_text}"
+        return f"Answer to '{self.question}': {self.answer_text} {self.score}"
 
 class QuestionResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
