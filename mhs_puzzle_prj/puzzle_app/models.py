@@ -66,6 +66,7 @@ class Category(models.Model):
 
 class Question(models.Model):
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
+    alphabetic_id = models.TextField(blank=True, null=True)
     question_required = models.BooleanField(default=True)
     content = models.TextField(unique = True)
 
