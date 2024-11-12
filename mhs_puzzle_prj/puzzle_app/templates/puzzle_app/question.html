@@ -1,6 +1,6 @@
 {% extends 'puzzle_app/layout.html' %}
 
-{% block body %}
+{% block content %}
 
  <!-- present the user with the various error (danger) and success messages (alerts)-->
  {% if messages %}
@@ -12,37 +12,58 @@
 
  <!-- progress bar -->
  <div class="progress">
-    <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100"></div>
+    <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%;"></div>
 </div>
 
  <!-- questions -->
-{% if subtitle %}
-{{ subtitle }}
-{% endfor %}
 
-{% if questions %}
-    {% for question in questions %}
-    <div id="question-view">
-        <div id="question_title" style="font-size: 28px; font-weight: bold;">{{ question.title }}</div>
+<h2>{{ category }}</h2>
+
+
+{% if group_text%}
+{{ group_text }}  <!-- needed for nutrition questions, displayed all togehter  -->
+{% endif %}
+
+{% if question %}
+    <div id="question-view" class="mt-5">
+        <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
         <div id="answer_options">
+            <ul style="list-style-type: none;" class="mt-4 ms-0">
             {% for choice in question.answer_choices %}
-                <button class="answer_button" data-score="{{ choice.score }}">{{ choice.answer_text }}</button>
+                <li class="mb-2 ms-0"><button class="btn answer_button btn-primary" data-score="{{ choice.score }}">{{ choice.answer_text }}</button></li>
             {% endfor %}
-        </div> 
-    {% endfor %}
+            </ul>
+        </div>    
     </div>
 {% else %}
-    <p>No more questions available.</p>
+    <p>No more questions available.  <!-- TODO redirect to the results page from the view --></p>
 {% endif %}
 
 <div class="buttons">
-    <button id="go_back">Go Back</button>
-    <button id="next">Next</button>
+    <button id="go_back" class="btn navigation_button btn-secondary me-3">Go Back</button>
+    <button id="next" class="btn navigation_button btn-secondary">Next</button>
 </div>
 
 <script>
+
+    //changing the color of the selected button
+    let answer_buttons = document.getElementsByClassName("answer_button");
+   
+    for (let i = 0; i < answer_buttons.length; i++){
+        answer_buttons[i].addEventListener('click', function() {
+            if(this.style.backgoundColor == "#f5af94"){
+            this.style.backgroundColor = "#ff7a6e";
+        }
+        else{
+            this.style.backgoundColor = "#f5af94";
+        }
+        } )
+    }
+        
+
+
     document.getElementById('next').addEventListener('click', function() {
-        // Load the next question
+        // Load the next question 
         window.location.reload();
     });
 
