@@ -4,6 +4,7 @@ from .models import Question, Answer, Category, Area
 
 from django.shortcuts import render, redirect
 
+#TODO add the "go back" logic
 def question_view(request):
     # Get the current question index from the session or start with the first question
     current_index = request.session.get('current_question_index', 0)
@@ -30,14 +31,16 @@ def question_view(request):
         if category == "Nutrition":
             nutrition_questions = Question.objects.filter(category__name="Nutrition")  # Filter Nutrition questions
             group_text = "In the last three days, did you consume any of the following foods:"
-            
+            print("nutrition questions returned form the db are ", nutrition_questions)
             for nutrition_question in nutrition_questions:
                 answers = Answer.objects.filter(question=nutrition_question)
                 question_to_present = {
+                    "id": nutrition_question.id,
                     "title": nutrition_question.content,
                     "answer_choices": [{"answer_text": answer.answer_text, "score": answer.score} for answer in answers]
                 }
                 nutrition_questions_to_present.append(question_to_present)
+                print("first, nutrition questions to present are ", nutrition_questions_to_present)
             
             # Move index forward by the count of nutrition questions
             request.session['current_question_index'] = current_index + nutrition_questions.count()
@@ -45,6 +48,7 @@ def question_view(request):
         else:  # For all other categories, display a single question
             answers = Answer.objects.filter(question=question)
             question_to_present = {
+                "id": question.id,
                 "title": question.content,
                 "answer_choices": [{"answer_text": answer.answer_text, "score": answer.score} for answer in answers]
             }
@@ -54,7 +58,9 @@ def question_view(request):
     else:
         # Reset the session index if all questions have been answered
         request.session['current_question_index'] = 0
+        category_to_display = ""
 
+    print("Nutrition Questions:", nutrition_questions_to_present)
     return render(request, "puzzle_app/question.html", {
         "question": question_to_present,
         "nutrition_questions": nutrition_questions_to_present,
@@ -64,5 +70,14 @@ def question_view(request):
     })
 
 #TODO allow the user to select only one button! Enforce the choice of at least one asnwer.
-def calculate_score(request):
+def save_answers(request):
     pass
+'''for each form submitted from the frontend,
+1. identify the user that submitted the form
+2. identify the question
+3. get the score for the question
+3.5 if no answer was selected, send the user an alert to select one answer
+4. store the score in the db
+'''
+
+

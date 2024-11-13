@@ -1,102 +1,86 @@
 {% extends 'puzzle_app/layout.html' %}
+{% load static %}
 
 {% block content %}
-
- <!-- present the user with the various error (danger) and success messages (alerts)-->
- {% if messages %}
-   {% for message in messages %}
-     <p class="alert alert-{{ message.tags }}">{{ message }}<p>
-   {% endfor %}
+<!-- Display messages (success or error alerts) -->
+{% if messages %}
+    {% for message in messages %}
+        <p class="alert alert-{{ message.tags }}">{{ message }}</p>
+    {% endfor %}
 {% endif %}
 
-
- <!-- progress bar -->
- <div class="progress mb-3">
+<!-- Progress bar -->
+<div class="progress mb-3">
     <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%;"></div>
 </div>
 
- <!-- questions -->
+<!-- Quiz content -->
+<form id="questionForm" method="POST" action="{% url 'save_answers' %}">
+    {% csrf_token %}
+    
+    <!-- Display category and group text (for Nutrition questions) -->
+    <h2>{{ category }}</h2>
+    {% if group_text %}
+        <p>{{ group_text }}</p> <!-- For Nutrition questions, displayed as a group -->
+    {% endif %}
 
-<h2>{{ category }}</h2>
 
+       <!-- Nutrition questions as a group -->
+       {% if nutrition_questions %}
+       <div id="question-block" class="mt-5">
+           {% for nutrition_question in nutrition_questions %}
+               <div id="question-view-{{ nutrition_question.id }}" class="mt-5">
+                   <div id="question_title" style="font-size: 16px;">{{ nutrition_question.title }}</div>
+                   <div id="answer_options">
+                       <ul style="list-style-type: none;" class="mt-4 ms-0">
+                           {% for choice in nutrition_question.answer_choices %}
+                               <li class="mb-2 ms-0">
+                                   <button type="button" class="btn answer_button btn-primary" data-score="{{ choice.score }}" data-question-id="{{ nutrition_question.id }}">
+                                       {{ choice.answer_text }}
+                                   </button>
+                               </li>
+                           {% endfor %}
+                       </ul>
+                   </div>
+                   <!-- Hidden input for the score of each Nutrition question -->
+                   <input type="hidden" name="selected_score_{{ nutrition_question.id }}" id="selectedScore_{{ nutrition_question.id }}" value="">
+               </div>
+           {% endfor %}
+       </div>
+       
+    <!-- Individual question (for non-Nutrition categories) -->
+    {% elif question %}
+        <div class="question-view mt-5">
+            <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
+            <div id="answer_options">
+                <ul style="list-style-type: none;" class="mt-4 ms-0">
+                    {% for choice in question.answer_choices %}
+                        <li class="mb-2 ms-0">
+                            <button type="button" class="btn answer_button btn-primary" data-score="{{ choice.score }}" data-question-id="{{ question.id }}">
+                                {{ choice.answer_text }}
+                            </button>
+                        </li>
+                    {% endfor %}
+                </ul>
+            </div>
+            <!-- Hidden input for the score of the current question -->
+            <input type="hidden" name="selected_score_{{ question.id }}" id="selectedScore_{{ question.id }}" value="">
+        </div>
 
-{% if group_text%}
-{{ group_text }}  <!-- needed for nutrition questions, displayed all togehter  -->
-{% endif %}
+ 
+    {% else %}
+        <p>All done!</p>
+    {% endif %}
 
- <!-- for questions of all categories except Nutrition  -->
-{% if question %}
-    <div class="question-view mt-5">
-        <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
-        <div id="answer_options">
-            <ul style="list-style-type: none;" class="mt-4 ms-0">
-            {% for choice in question.answer_choices %}
-                <li class="mb-2 ms-0"><button class="btn answer_button btn-primary" data-score="{{ choice.score }}">{{ choice.answer_text }}</button></li>
-            {% endfor %}
-            </ul>
-        </div>    
+    <!-- Navigation buttons -->
+    <div class="buttons mb-5">
+        <button type="button" id="go_back" class="btn navigation_button btn-secondary me-3">Go Back</button>
+        <button type="submit" id="next" class="btn navigation_button btn-secondary">Next</button>
     </div>
+</form>
 
- <!-- for Nutrition questions  -->
-{% elif nutrition_questions %}
-<div id="question-block" class="mt-5"> <!-- block of nutrtition questions  -->
-    {% for question in nutrition_questions %}
-    <div id="question-view" class="mt-5">
-        <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
-        <div id="answer_options">
-            <ul style="list-style-type: none;" class="mt-4 ms-0">
-            {% for choice in question.answer_choices %}
-                <li class="mb-2 ms-0"><button class="btn answer_button btn-primary" data-score="{{ choice.score }}">{{ choice.answer_text }}</button></li>
-            {% endfor %}
-            </ul>
-        </div>    
-    </div>
-    {% endfor %}
-</div>
-{% else %}
-    <p>No more questions available.  <!-- TODO redirect to the results page from the view --></p>
-{% endif %}
-
-<div class="buttons mb-5">
-    <button id="go_back" class="btn navigation_button btn-secondary me-3">Go Back</button>
-    <button id="next" class="btn navigation_button btn-secondary">Next</button>
-</div>
-
-<script>
-
-    //changing the color of the selected button
-    let answer_buttons = document.getElementsByClassName("answer_button");
-   
-    for (let i = 0; i < answer_buttons.length; i++){
-        answer_buttons[i].addEventListener('click', function() {
-            if(this.style.backgoundColor == "#f5af94"){
-            this.style.backgroundColor = "#ff7a6e";
-        }
-        else{
-            this.style.backgoundColor = "#f5af94";
-        }
-        } )
-    }
-        
-
-
-    document.getElementById('next').addEventListener('click', function() {
-        // Load the next question 
-        window.location.reload();
-    });
-
-    document.getElementById('go_back').addEventListener('click', function() {
-        // Go back to the previous question
-        // Implement logic to handle going back if needed
-    });
-
-    document.querySelectorAll('.answer_button').forEach(button => {
-        button.addEventListener('click', function() {
-            const score = this.getAttribute('data-score');
-            console.log('Selected score:', score);
-            // Handle answer selection logic here
-        });
-    });
-</script>
+<!-- Link to JavaScript file -->
+<script src="{% static 'puzzle_app/js/question_view.js' %}"></script>
 
 {% endblock %}
+
