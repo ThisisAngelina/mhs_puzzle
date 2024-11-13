@@ -11,7 +11,7 @@
 
 
  <!-- progress bar -->
- <div class="progress">
+ <div class="progress mb-3">
     <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%;"></div>
 </div>
 
@@ -24,7 +24,23 @@
 {{ group_text }}  <!-- needed for nutrition questions, displayed all togehter  -->
 {% endif %}
 
+ <!-- for questions of all categories except Nutrition  -->
 {% if question %}
+    <div class="question-view mt-5">
+        <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
+        <div id="answer_options">
+            <ul style="list-style-type: none;" class="mt-4 ms-0">
+            {% for choice in question.answer_choices %}
+                <li class="mb-2 ms-0"><button class="btn answer_button btn-primary" data-score="{{ choice.score }}">{{ choice.answer_text }}</button></li>
+            {% endfor %}
+            </ul>
+        </div>    
+    </div>
+
+ <!-- for Nutrition questions  -->
+{% elif nutrition_questions %}
+<div id="question-block" class="mt-5"> <!-- block of nutrtition questions  -->
+    {% for question in nutrition_questions %}
     <div id="question-view" class="mt-5">
         <div id="question_title" style="font-size: 16px;">{{ question.title }}</div>
         <div id="answer_options">
@@ -35,11 +51,13 @@
             </ul>
         </div>    
     </div>
+    {% endfor %}
+</div>
 {% else %}
     <p>No more questions available.  <!-- TODO redirect to the results page from the view --></p>
 {% endif %}
 
-<div class="buttons">
+<div class="buttons mb-5">
     <button id="go_back" class="btn navigation_button btn-secondary me-3">Go Back</button>
     <button id="next" class="btn navigation_button btn-secondary">Next</button>
 </div>
