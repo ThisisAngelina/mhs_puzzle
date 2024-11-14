@@ -1,6 +1,5 @@
 from django.contrib import admin
 from .models import (
-    User,
     SurveyCompletion,
     UserInteraction,
     Area,
@@ -16,7 +15,6 @@ from .models import (
 )
 
 # Registering models with the Django admin site
-admin.site.register(User)
 admin.site.register(SurveyCompletion)
 admin.site.register(UserInteraction)
 admin.site.register(Area)

@@ -1,4 +1,3 @@
-//TODO to fix: questionId is not getting obtained. need to pass it from the backend.
 document.addEventListener("DOMContentLoaded", () => {
     // Select all answer buttons
     const answerButtons = document.querySelectorAll(".answer_button");

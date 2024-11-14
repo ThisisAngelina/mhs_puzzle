@@ -15,7 +15,7 @@
 </div>
 
 <!-- Quiz content -->
-<form id="questionForm" method="POST" action="{% url 'save_answers' %}">
+<form id="questionForm" method="POST" action="{% url 'quiz' %}">
     {% csrf_token %}
     
     <!-- Display category and group text (for Nutrition questions) -->
@@ -47,7 +47,7 @@
                </div>
            {% endfor %}
        </div>
-       
+
     <!-- Individual question (for non-Nutrition categories) -->
     {% elif question %}
         <div class="question-view mt-5">
