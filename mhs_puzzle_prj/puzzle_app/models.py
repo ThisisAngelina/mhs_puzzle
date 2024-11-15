@@ -3,10 +3,10 @@ from django.contrib.auth.models import User
 
 class SurveyCompletion(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    survey_date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
-        return f"Survey Completion for {self.user} on {self.survey_date.strftime('%Y-%m-%d')}"
+        return f"Survey Completion for {self.user} on {self.completion_time.strftime('%Y-%m-%d')}"
 
 #needed to track user engagenent with particular features, such as the share button
 class UserInteraction(models.Model):
@@ -68,7 +68,7 @@ class Answer(models.Model):
 class QuestionResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
     score = models.FloatField()
 
     def __str__(self):
@@ -77,7 +77,7 @@ class QuestionResult(models.Model):
 class CategoryResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     category = models.ForeignKey(Category, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
     score = models.FloatField()
 
     def __str__(self):
@@ -86,7 +86,7 @@ class CategoryResult(models.Model):
 class AreaResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     area = models.ForeignKey(Area, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
     score = models.FloatField()
 
     def __str__(self):
@@ -95,7 +95,7 @@ class AreaResult(models.Model):
 
 class Focus(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
     lifestyle_focus = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='lifestyle_focus_set')
     skincare_focus = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='skincare_focus_set')
     esthetic_focus = models.ForeignKey(Category, on_delete=models.CASCADE, related_name='esthetic_focus_set')
@@ -108,13 +108,13 @@ class Focus(models.Model):
     
 class Recommendation(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateTimeField(auto_now_add=True)
+    completion_time = models.DateTimeField(auto_now_add=True)
     lifestyle_recommendation = models.TextField()
     skincare_recommendation = models.TextField()
     esthetic_recommendation = models.TextField()
 
     def __str__(self):
-        return f"Recommendation for {self.user} on {self.date.strftime('%Y-%m-%d')}"
+        return f"Recommendation for {self.user} on {self.completion_time.strftime('%Y-%m-%d')}"
 
 
 class Prompt(models.Model):

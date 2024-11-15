@@ -1,44 +1,24 @@
 from django.shortcuts import render
-from .models import Question, Answer, Category, Area, QuestionResult, User
+from django.utils.timezone import now
 from django.contrib import messages
 from django.contrib.auth.models import User
+
+from .models import Question, Answer, Category, Area, QuestionResult, SurveyCompletion
+
+from . import services
 
 
 from django.shortcuts import render, redirect
 
 #TODO add the "go back" logic
+#@login_required
 def quiz(request):
-    #if the user has clicked on the "next button"
-    if request.method == "POST":
-        #identify the question
-        print("form submitted")
-        # Loop through POST data to find question scores
-        for key, value in request.POST.items():
-            if key.startswith("selected_score_"):
-                # Extract question_id from the key name
-                question_id = key.split("_")[-1]
-                question_score = value  # This is the selected score for this question
-
-                if value:
-                    #identify the relevant question object
-                    question = Question.objects.get(id=question_id)
-
-                    #save the answer to the db
-                    temp_user = User.objects.get(username="test_user") #temporarily saving the scores under Angelina's account
-                    new_score = QuestionResult.objects.create(user=temp_user, question=question, score=question_score)
-                    new_score.save()
-                    print("the new score recorded is ", new_score)
-                    answers_processed = True
-                else: #if no answer was selected
-                    messages.warning(request, "Ooops, please select an answer!")
-                    return redirect('quiz')
-                
-        if answers_processed:
-            return redirect('quiz') #allow the user to continue with the quiz
-
-    else: #display the questions
+    current_index = request.session.get('current_question_index', 0)
+    if request.method != "POST":
+        user = request.user 
+        #display the questions
         # Get the current question index from the session or start with the first question
-        current_index = request.session.get('current_question_index', 0)
+        
         questions = Question.objects.all()  # Queryset of all questions
         question_count = questions.count()
         progress = round(current_index / question_count * 100) if question_count > 0 else 0
@@ -88,6 +68,12 @@ def quiz(request):
             # Reset the session index if all questions have been answered
             request.session['current_question_index'] = 0
             category_to_display = ""
+            #record the fact of the questionnaire completion in the SurveyCompeltion model
+            completion_time = now()
+            new_quiz_submission = SurveyCompletion.objects.create(user=user, completion_time=completion_time)
+            new_quiz_submission.save()
+            #calculate the cateogry scores for the user
+            services.calculate_category_scores(user, completion_time)
 
         return render(request, "puzzle_app/question.html", {
             "question": question_to_present,
@@ -97,13 +83,34 @@ def quiz(request):
             "group_text": group_text
         })
 
+    else: #if the user is sending in their responses (the user has clicked on the "next button"):
+        #identify the question
+        print("form submitted")
+        # Loop through POST data to find question scores
+        for key, value in request.POST.items():
+            if key.startswith("selected_score_"):
+                # Extract question_id from the key name
+                question_id = key.split("_")[-1]
+                question_score = value  # This is the selected score for this question
 
-'''for each form submitted from the frontend,
-1. identify the user that submitted the form
-2. identify the question
-3. get the score for the question
-3.5 if no answer was selected, send the user an alert to select one answer
-4. store the score in the db
-'''
+                if value:
+                    #identify the relevant question object
+                    question = Question.objects.get(id=question_id)
+                    #TODO indentify the user correctly
+                    #save the answer to the db
+                    temp_user = User.objects.get(username="test_user") #temporarily saving the scores under Angelina's account
+                    new_score = QuestionResult.objects.create(user=temp_user, question=question, score=question_score)
+                    new_score.save()
+                    print("the new score recorded is ", new_score)
+                    answers_processed = True
+                else: #if no answer was selected
+                    messages.warning(request, "Ooops, please select an answer!")
+                    request.session['current_question_index'] = current_index - 1
+                    return redirect('quiz')
+                
+        if answers_processed:
+            return redirect('quiz') #allow the user to continue with the quiz
+
+
 
 
