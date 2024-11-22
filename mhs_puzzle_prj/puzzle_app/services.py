@@ -4,6 +4,9 @@ from .models import Category, Area, QuestionResult, CategoryResult, SurveyComple
 from django.contrib.auth.models import User
 
 
+
+categories = Category.objects.all()   #returns an iterable set of category objects 
+
 def calculate_category_scores(user):
     
     # pull out the set of categories and the set of areas to prepare the results for
@@ -11,15 +14,9 @@ def calculate_category_scores(user):
     # plug stuff into the formula
     #evaluate nutrition questions separately
 
-
     # pull out the questions submitted
-    print("the user is ", user.username)
-    
     answers = QuestionResult.objects.filter(user=user)
-    print("the user's answers are ", answers)
-    # pull out the set of categories and the set of areas to prepare the results for:
-    categories = Category.objects.all() #returns category objects
-    print("the categories are ", categories)
+    print("the number of user answers fetched is", answers.count())
 
     if answers: # if the user submitted answers
     # for each category, obtain the score calculation formula
@@ -31,35 +28,51 @@ def calculate_category_scores(user):
                 for question in questions:
                     question_alphabetic_id = question.question.alphabetic_id
                     score = question.score
-                    values[question_alphabetic_id] = score
+                    values[question_alphabetic_id] = score #append to the values dictionary the value of the question's score under the key of the question's alphabetic id
 
                 print(f"Values for category '{category.name}':", values)
 
                 try: 
                     category_score = eval(formula, {}, values)
                     print(f"the score for the {category.name} category is ", category_score)
-                    category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
+                    category_result = CategoryResult.objects.create(user=user, category=category, score=category_score) #record the category score in the db
+                    category_result.save()
+                
+                except Exception as e:
+                    print(f"Error evaluating formula for category '{category.name}':", e) #TODO record it in the log book
+
+            else: #scoring the Nutrition category 
+
+               
+                formula = "(((whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit) - (soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks) + 9)/18)*100"
+                values = {}
+                nutrition_category = categories.filter(name="Nutrition").first()
+                questions = answers.filter(question__category=nutrition_category)
+                print("the nutrition answers are", questions) #the user's answers to that category of questions
+                for question in questions:
+                    question_alphabetic_id = question.question.alphabetic_id
+                    score = question.score
+                    values[question_alphabetic_id] = score
+                
+                try: 
+                    category_score = eval(formula, {}, values)
+                    print(f"the score for the Nutrition category is ", category_score)
+                    category_result = CategoryResult.objects.create(user=user, category=category, score=category_score) #record the category score in the db
                     category_result.save()
                 
                 except Exception as e:
                     print(f"Error evaluating formula for category '{category.name}':", e)
+                '''
+                ncdp = whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit
+                ncdr = soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks
+                gdr_raw = (ncdp - ncdr + 9)
+                gdr = (gdr_raw/18)*100 #the gdr score expressed as a percentage
+                '''
 
-            else: #scoring the Nutrition category
-                pass
+            
     else:
         print("oops there are no answers to evaluate!")
         #log the exception to the logbook
-        '''
-            ncdp = whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit
 
-            ncdr = soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks
 
-            gdr_raw = (ncdp - ncdr + 9)
-            gdr = (gdr_raw/18)*100 #the gdr score expressed as a percentage
-
-            category_score = eval(formula, [{}], values)
-            print("the score for the {category_name} category is ", category_score)
-            category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
-'''
-
-#def build_wheel_of_life_graph:
+#def build_wheel_of_life_graph: #TODO
