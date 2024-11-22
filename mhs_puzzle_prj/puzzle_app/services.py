@@ -1,78 +1,94 @@
 # handle Category score calculation and graph creation 
+from django.db.models import Prefetch
 
-from .models import Category, Area, QuestionResult, CategoryResult, SurveyCompletion 
+from .models import Question, Category, CategoryResult, Answer
 from django.contrib.auth.models import User
 
+#prep
+
+# Prefetch the querysets globally
+def load_questions(): #TODO store it in Redis later
+    global questions, question_count, nutrition_questions, categories
+    questions = Question.objects.select_related('category', 'category__area').prefetch_related(
+        Prefetch('answer_set', queryset=Answer.objects.all())
+    )
+    categories = Category.objects.all()
+    question_count = questions.count()
+    nutrition_questions = questions.filter(category__name="Nutrition")  # Questions in the "Nutrition" category
 
 
-categories = Category.objects.all()   #returns an iterable set of category objects 
+load_questions()
+   #prefetch quiz question categories
 
-def calculate_category_scores(user):
-    
-    # pull out the set of categories and the set of areas to prepare the results for
-    # for each category, obtain the score calculation formula
-    # plug stuff into the formula
-    #evaluate nutrition questions separately
+#executing the functions 
+#user is the user object, user_answers is the dictionary {queston id: question score}
+def process_answers(user, user_answers):
+    calculate_category_scores(user, user_answers)
+    #make_graphs(user, user_answers)
 
-    # pull out the questions submitted
-    answers = QuestionResult.objects.filter(user=user)
-    print("the number of user answers fetched is", answers.count())
-
-    if answers: # if the user submitted answers
-    # for each category, obtain the score calculation formula
-        for category in categories:
-            if category.name != "Nutrition": #Nutrition is scored differently
-                formula = category.formula #string
-                values = {} #set up a dictionary (to pass into the eval function later) that holds questions' alphabetic id's as keys and the relative answer scores as values
-                questions = answers.filter(question__category=category) #the user's answers to that category of questions
-                for question in questions:
-                    question_alphabetic_id = question.question.alphabetic_id
-                    score = question.score
-                    values[question_alphabetic_id] = score #append to the values dictionary the value of the question's score under the key of the question's alphabetic id
-
-                print(f"Values for category '{category.name}':", values)
-
-                try: 
-                    category_score = eval(formula, {}, values)
-                    print(f"the score for the {category.name} category is ", category_score)
-                    category_result = CategoryResult.objects.create(user=user, category=category, score=category_score) #record the category score in the db
-                    category_result.save()
-                
-                except Exception as e:
-                    print(f"Error evaluating formula for category '{category.name}':", e) #TODO record it in the log book
-
-            else: #scoring the Nutrition category 
-
-               
-                formula = "(((whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit) - (soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks) + 9)/18)*100"
-                values = {}
-                nutrition_category = categories.filter(name="Nutrition").first()
-                questions = answers.filter(question__category=nutrition_category)
-                print("the nutrition answers are", questions) #the user's answers to that category of questions
-                for question in questions:
-                    question_alphabetic_id = question.question.alphabetic_id
-                    score = question.score
-                    values[question_alphabetic_id] = score
-                
-                try: 
-                    category_score = eval(formula, {}, values)
-                    print(f"the score for the Nutrition category is ", category_score)
-                    category_result = CategoryResult.objects.create(user=user, category=category, score=category_score) #record the category score in the db
-                    category_result.save()
-                
-                except Exception as e:
-                    print(f"Error evaluating formula for category '{category.name}':", e)
-                '''
-                ncdp = whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit
-                ncdr = soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks
-                gdr_raw = (ncdp - ncdr + 9)
-                gdr = (gdr_raw/18)*100 #the gdr score expressed as a percentage
-                '''
-
+# Pass `user_answers` as a dictionary {question_id: score}
+def calculate_category_scores(user, user_answers):
+    # Iterate over categories to calculate scores
+    for category in categories:
+        if category.name != "Nutrition":  # Process non-Nutrition categories
+            formula = category.formula  # The formula is a string
+            values = {}  # Dictionary to hold question alphabetic IDs and their scores
             
+            # Collect relevant questions and their scores
+            questions_in_category = [q for q in questions if q.category == category]
+            for question in questions_in_category:
+                question_id_str = str(question.id)
+                if question_id_str in user_answers:
+                    question_alphabetic_id = question.alphabetic_id
+                    score = float(user_answers[question_id_str])  # Convert score to float
+                    values[question_alphabetic_id] = score
+            
+            print(f"Values for category '{category.name}':", values)
+
+            try:
+                # Evaluate the formula
+                category_score = eval(formula, {}, values)
+                print(f"Score for the {category.name} category:", category_score)
+                
+                # Save the category score to the database
+                category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
+                category_result.save()
+            
+            except Exception as e:
+                print(f"Error evaluating formula for category '{category.name}':", e)
+                # Log this error in a logging system 
+
+        else:  # Process Nutrition category separately
+            formula = "(((whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit) - (soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks) + 9)/18)*100"
+            values = {}
+
+            nutrition_questions = [q for q in questions if q.category == category] #questions is the queryset of all the quesstions, obitained with the load_questions function
+
+            for question in nutrition_questions:
+                question_id_str = str(question.id)
+                if question_id_str in user_answers:
+                    question_alphabetic_id = question.alphabetic_id
+                    score = float(user_answers[question_id_str])  # Convert score to float
+                    values[question_alphabetic_id] = score
+
+            print(f"Values for Nutrition category:", values)
+
+            try:
+                # Evaluate the Nutrition formula
+                category_score = eval(formula, {}, values)
+                print(f"Score for the Nutrition category:", category_score)
+                
+                # Save the category score to the database
+                category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
+                category_result.save()
+            
+            except Exception as e:
+                print(f"Error evaluating formula for Nutrition category:", e)
+                # Log this error in a logging system 
     else:
         print("oops there are no answers to evaluate!")
         #log the exception to the logbook
 
 
-#def build_wheel_of_life_graph: #TODO
+def make_graphs(user, user_answers): #TODO
+    print("the make_graphs() function was called")
