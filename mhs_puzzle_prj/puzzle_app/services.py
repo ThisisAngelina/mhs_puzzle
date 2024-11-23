@@ -1,5 +1,7 @@
 # handle Category score calculation and graph creation 
 from django.db.models import Prefetch
+import matplotlib.pyplot as plt
+import numpy as np
 
 from .models import Question, Category, CategoryResult, Answer
 from django.contrib.auth.models import User
@@ -24,7 +26,7 @@ load_questions()
 #user is the user object, user_answers is the dictionary {queston id: question score}
 def process_answers(user, user_answers):
     calculate_category_scores(user, user_answers)
-    #make_graphs(user, user_answers)
+    make_graphs(user, user_answers)
 
 # Pass `user_answers` as a dictionary {question_id: score}
 def calculate_category_scores(user, user_answers):
@@ -92,3 +94,55 @@ def calculate_category_scores(user, user_answers):
 
 def make_graphs(user, user_answers): #TODO
     print("the make_graphs() function was called")
+
+    #single-category graphs for all but Esthetic questions:
+    for category in categories #TODO
+    
+    draw_simple_gauge(80, "Sleep", "/path/to/save/sleep_gauge.jpeg")
+
+
+
+def draw_simple_gauge(value, label, output_file="gauge.jpeg"):
+    """
+    Draw a simple gauge chart to represent a percentage value.
+
+    Args:
+        value (int or float): The percentage value (0-100) to display on the gauge.
+        label (str): The label to display beneath the gauge.
+        output_file (str): The file path where the gauge image will be saved.
+    """
+    # Normalize the value to be between 0 and 100
+    value = max(0, min(100, value))
+
+    # Create the gauge figure
+    fig, ax = plt.subplots(figsize=(4, 2), subplot_kw={'projection': 'polar'})
+
+    # Define the theta range for the gauge
+    theta = np.linspace(0, np.pi, 100)
+    radius = 1
+
+    # Background arc
+    ax.fill_between(theta, 0, radius, color='lightgray', alpha=0.5)
+
+    # Foreground arc
+    theta_value = value / 100 * np.pi  # Map value to angle
+    ax.fill_between(theta[theta <= theta_value], 0, radius, color='skyblue')
+
+    # Add the percentage label in the center
+    ax.text(0, -0.2, f"{value}%", fontsize=20, ha='center', va='center', transform=ax.transAxes)
+
+    # Add the category label below
+    ax.text(0, -0.4, label, fontsize=14, ha='center', va='center', transform=ax.transAxes)
+
+    # Customize the chart
+    ax.set_theta_zero_location("W")  # Start from the west
+    ax.set_theta_direction(-1)  # Clockwise
+    ax.set_yticklabels([])  # Remove radial ticks
+    ax.set_xticks([])  # Remove angular ticks
+    ax.set_frame_on(False)
+
+    # Save the figure as a JPEG file
+    plt.savefig(output_file, format="jpeg", dpi=300, bbox_inches="tight")
+    plt.close(fig)
+
+    print(f"Gauge saved as {output_file}")

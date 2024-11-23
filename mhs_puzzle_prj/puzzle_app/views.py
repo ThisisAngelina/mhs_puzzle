@@ -1,3 +1,7 @@
+#NOTES TODO to check the calculate_category_scores() function - whether the quiz function passes the user_answer data to it. Next: work on the grpahb building function(s)
+#check how and where to store graphs
+
+
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 from django.contrib import messages
