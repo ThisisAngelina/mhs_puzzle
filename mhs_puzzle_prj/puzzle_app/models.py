@@ -25,7 +25,7 @@ class Area(models.Model):
     name = models.CharField(max_length=255, unique = True)
     max_score = models.FloatField()
     high_score_good = models.BooleanField(default=True)
-    formula = models.CharField(max_length=255)
+    formula = models.CharField(max_length=1000)
 
     def __str__(self):
         return self.name
@@ -36,7 +36,7 @@ class Category(models.Model):
     name = models.CharField(max_length=255, unique = True)
     max_score = models.FloatField()
     high_score_good = models.BooleanField(default=True)
-    formula = models.CharField(max_length=255)
+    formula = models.CharField(max_length=1000)
 
     class Meta:
         verbose_name_plural = "Categories"  

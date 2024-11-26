@@ -1,7 +1,10 @@
 # handle Category score calculation and graph creation 
 from django.db.models import Prefetch
+from django.http import HttpResponse
 import matplotlib.pyplot as plt
+from matplotlib import rcParams
 import numpy as np
+from io import BytesIO
 
 from .models import Question, Category, CategoryResult, Answer
 from django.contrib.auth.models import User
@@ -24,12 +27,11 @@ load_questions()
 
 #executing the functions 
 #user is the user object, user_answers is the dictionary {queston id: question score}
-def process_answers(user, user_answers):
-    calculate_category_scores(user, user_answers)
-    make_graphs(user, user_answers)
-
 # Pass `user_answers` as a dictionary {question_id: score}
-def calculate_category_scores(user, user_answers):
+def process_scores(user, user_answers):
+
+    gauge_graphs = [] #an awway that holds the variables that refer to the category gauge graphs
+
     # Iterate over categories to calculate scores
     for category in categories:
         if category.name != "Nutrition":  # Process non-Nutrition categories
@@ -83,6 +85,10 @@ def calculate_category_scores(user, user_answers):
                 # Save the category score to the database
                 category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
                 category_result.save()
+
+                # Build the gauge graph with the category result
+                if category.area.name != "Esthetic":
+                    draw_simple_gauge #TODO
             
             except Exception as e:
                 print(f"Error evaluating formula for Nutrition category:", e)
@@ -91,18 +97,7 @@ def calculate_category_scores(user, user_answers):
         print("oops there are no answers to evaluate!")
         #log the exception to the logbook
 
-
-def make_graphs(user, user_answers): #TODO
-    print("the make_graphs() function was called")
-
-    #single-category graphs for all but Esthetic questions:
-    for category in categories #TODO
-    
-    draw_simple_gauge(80, "Sleep", "/path/to/save/sleep_gauge.jpeg")
-
-
-
-def draw_simple_gauge(value, label, output_file="gauge.jpeg"):
+def draw_simple_gauge(user_id, value, label, output_file="gauge.png"):
     """
     Draw a simple gauge chart to represent a percentage value.
 
@@ -113,6 +108,9 @@ def draw_simple_gauge(value, label, output_file="gauge.jpeg"):
     """
     # Normalize the value to be between 0 and 100
     value = max(0, min(100, value))
+
+    # Set global font to Georgia
+    rcParams['font.family'] = 'Georgia'
 
     # Create the gauge figure
     fig, ax = plt.subplots(figsize=(4, 2), subplot_kw={'projection': 'polar'})
@@ -126,13 +124,13 @@ def draw_simple_gauge(value, label, output_file="gauge.jpeg"):
 
     # Foreground arc
     theta_value = value / 100 * np.pi  # Map value to angle
-    ax.fill_between(theta[theta <= theta_value], 0, radius, color='skyblue')
+    ax.fill_between(theta[theta <= theta_value], 0, radius, color='#728bff')
 
     # Add the percentage label in the center
     ax.text(0, -0.2, f"{value}%", fontsize=20, ha='center', va='center', transform=ax.transAxes)
 
     # Add the category label below
-    ax.text(0, -0.4, label, fontsize=14, ha='center', va='center', transform=ax.transAxes)
+    ax.text(0, -0.4, label, fontsize=16, ha='center', va='center', transform=ax.transAxes)
 
     # Customize the chart
     ax.set_theta_zero_location("W")  # Start from the west
@@ -141,8 +139,14 @@ def draw_simple_gauge(value, label, output_file="gauge.jpeg"):
     ax.set_xticks([])  # Remove angular ticks
     ax.set_frame_on(False)
 
-    # Save the figure as a JPEG file
-    plt.savefig(output_file, format="jpeg", dpi=300, bbox_inches="tight")
+    # Remove the lower part of the grid (make it appear like a semicircle)
+    ax.set_ylim(0, 1)
+
+    # Save the figure to an in-memory buffer
+    buffer = BytesIO()
+    plt.savefig(buffer, format='png', dpi=300, bbox_inches="tight", transparent=True)
+    buffer.seek(0)
     plt.close(fig)
 
-    print(f"Gauge saved as {output_file}")
+    # Serve the image as an HTTP response
+    return HttpResponse(buffer, content_type="image/png")

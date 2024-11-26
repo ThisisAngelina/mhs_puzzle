@@ -1,28 +1,42 @@
-#NOTES TODO to check the calculate_category_scores() function - whether the quiz function passes the user_answer data to it. Next: work on the grpahb building function(s)
-#check how and where to store graphs
-
 
 from django.shortcuts import render, redirect
 from django.utils.timezone import now
 from django.contrib import messages
 from django.db.models import Prefetch
+from django.core.cache import cache
 
-from .models import Question, Answer, Category, Area, QuestionResult, SurveyCompletion
+from .models import Question, Answer, QuestionResult, SurveyCompletion
 from . import services
 
 
 # Prefetch the querysets globally
-def load_questions(): #TODO store it in Redis later
+def load_questions(): 
     global questions, question_count, nutrition_questions
-    questions = Question.objects.select_related('category', 'category__area').prefetch_related(
-        Prefetch('answer_set', queryset=Answer.objects.all())
-    )
+
+    # cache keys    
+    questions_cache_key = "quiz_questions"
+    nutrition_questions_cache_key = "nutrition_questions"
+
+    # Try to get data from cache
+    questions = cache.get(questions_cache_key)
+    nutrition_questions = cache.get(nutrition_questions_cache_key)
+
+    if not questions or not nutrition_questions:
+        # If not in cache, query the database
+        questions = Question.objects.select_related('category', 'category__area').prefetch_related(
+            Prefetch('answer_set', queryset=Answer.objects.all())
+        )
+        nutrition_questions = questions.filter(category__name="Nutrition")  # Questions in the "Nutrition" category
+
+        # Cache the querysets
+        cache.set(questions_cache_key, questions, timeout=60 * 60 * 24 * 30)  # Cache for 30 days
+        cache.set(nutrition_questions_cache_key, nutrition_questions, timeout=60 * 60 * 24 * 30)  # Cache for 30 days
+
     question_count = questions.count()
-    nutrition_questions = questions.filter(category__name="Nutrition")  # Questions in the "Nutrition" category
+
 
 
 load_questions()
-
 
 # Main quiz function
 def quiz(request):
@@ -88,7 +102,7 @@ def quiz(request):
             # Process the data to calculate the scores and produce the graphs
             #create the dictionary needed for the processing:
             
-            services.process_answers(user, user_answers)
+            services.process_scores(user, user_answers)
             request.session.pop('user_answers', None)  # Clear answers after processing
 
         return render(request, "puzzle_app/question.html", {
@@ -128,3 +142,4 @@ def quiz(request):
 
         request.session['user_answers'] = user_answers  # Save updated answers in the session
         return redirect('quiz')  # Allow the user to continue with the quiz
+    
