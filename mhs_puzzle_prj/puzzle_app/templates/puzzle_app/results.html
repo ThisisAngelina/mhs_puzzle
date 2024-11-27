@@ -1,0 +1,42 @@
+{% extends 'puzzle_app/layout.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Display messages (success or error alerts) -->
+{% if messages %}
+    {% for message in messages %}
+        <p class="alert alert-{{ message.tags }}">{{ message }}</p>
+    {% endfor %}
+{% endif %}
+<h1 class="text-center mb-4">Your results:</h1>
+<!-- Display graphs -->
+<h2 class="text-center mb-4">Your diagnostics:</h2>
+    <!-- Display category gauge graphs -->
+    <div class="container mt-5">
+        <div class="row">
+            {% for category_name, image_base64 in category_images.items %}
+                <div class="col-md-4">
+                    <div class="category-card">
+                        <img src="data:image/png;base64,{{ image_base64 }}" alt="{{ category_name }} Graph">
+                    </div>
+                </div>
+                {% if forloop.counter|divisibleby:3 and not forloop.last %}
+                    </div><div class="row">
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- Display wheel of life graph -->
+    <div class="container mt-5">
+        <img src="" alt="the wheel of life">
+    </div>
+ 
+<h2 class="text-center mb-4">Your priority area:</h2>
+<p> {{ priority_area }} </p>
+
+<h2 class="text-center mb-4">My Healthy Skin recommends:</h2>
+<p> {{ recommendations }} </p>
+
+
+{% endblock %}

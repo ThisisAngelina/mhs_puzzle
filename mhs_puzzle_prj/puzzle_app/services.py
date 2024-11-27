@@ -1,6 +1,6 @@
 # handle Category score calculation and graph creation 
 from django.db.models import Prefetch
-from django.http import HttpResponse
+from django.core.cache import cache
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
@@ -9,8 +9,7 @@ from io import BytesIO
 from .models import Question, Category, CategoryResult, Answer
 from django.contrib.auth.models import User
 
-#prep
-
+#TODO to refactor to use Redis, just like in views.py
 # Prefetch the querysets globally
 def load_questions(): #TODO store it in Redis later
     global questions, question_count, nutrition_questions, categories
@@ -25,86 +24,60 @@ def load_questions(): #TODO store it in Redis later
 load_questions()
    #prefetch quiz question categories
 
+#TODO Check if the eval function handles all edge cases, particularly missing values.
 #executing the functions 
 #user is the user object, user_answers is the dictionary {queston id: question score}
 # Pass `user_answers` as a dictionary {question_id: score}
 def process_scores(user, user_answers):
-
-    gauge_graphs = [] #an awway that holds the variables that refer to the category gauge graphs
+    """
+    Calculate category scores for a user and generate gauge graphs for display.
+    """
+    gauge_graphs = {}  # Dictionary to store graph images as byte streams
 
     # Iterate over categories to calculate scores
     for category in categories:
-        if category.name != "Nutrition":  # Process non-Nutrition categories
-            formula = category.formula  # The formula is a string
-            values = {}  # Dictionary to hold question alphabetic IDs and their scores
-            
-            # Collect relevant questions and their scores
-            questions_in_category = [q for q in questions if q.category == category]
-            for question in questions_in_category:
-                question_id_str = str(question.id)
-                if question_id_str in user_answers:
-                    question_alphabetic_id = question.alphabetic_id
-                    score = float(user_answers[question_id_str])  # Convert score to float
-                    values[question_alphabetic_id] = score
-            
-            print(f"Values for category '{category.name}':", values)
+        formula = category.formula
+        values = {}  # Prepare values dictionary for `eval`
 
-            try:
-                # Evaluate the formula
-                category_score = eval(formula, {}, values)
-                print(f"Score for the {category.name} category:", category_score)
-                
-                # Save the category score to the database
-                category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
-                category_result.save()
-            
-            except Exception as e:
-                print(f"Error evaluating formula for category '{category.name}':", e)
-                # Log this error in a logging system 
+        # Filter relevant questions and populate scores
+        questions_in_category = [q for q in questions if q.category == category]
+        for question in questions_in_category:
+            question_id_str = str(question.id)
+            if question_id_str in user_answers:
+                question_alphabetic_id = question.alphabetic_id
+                score = float(user_answers[question_id_str])
+                values[question_alphabetic_id] = score
 
-        else:  # Process Nutrition category separately
-            formula = "(((whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit) - (soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks) + 9)/18)*100"
-            values = {}
+        print(f"Values for category '{category.name}':", values)
 
-            nutrition_questions = [q for q in questions if q.category == category] #questions is the queryset of all the quesstions, obitained with the load_questions function
+        try:
+            # Evaluate the formula
+            category_score = eval(formula, {}, values)
+            print(f"Score for the {category.name} category:", category_score)
 
-            for question in nutrition_questions:
-                question_id_str = str(question.id)
-                if question_id_str in user_answers:
-                    question_alphabetic_id = question.alphabetic_id
-                    score = float(user_answers[question_id_str])  # Convert score to float
-                    values[question_alphabetic_id] = score
+            # Save the category score to the database
+            CategoryResult.objects.create(user=user, category=category, score=category_score)
 
-            print(f"Values for Nutrition category:", values)
+            # Generate and save the gauge graph
+            gauge_plot = draw_simple_gauge(round(category_score, 2), category.name)
+            img_bytes = BytesIO()  # Create a byte stream
+            gauge_plot.savefig(img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
+            plt.close(gauge_plot)  # Close the plot to free memory
+            gauge_graphs[category.name] = img_bytes.getvalue()  # Store the byte stream in the cache
 
-            try:
-                # Evaluate the Nutrition formula
-                category_score = eval(formula, {}, values)
-                print(f"Score for the Nutrition category:", category_score)
-                
-                # Save the category score to the database
-                category_result = CategoryResult.objects.create(user=user, category=category, score=category_score)
-                category_result.save()
+        except Exception as e:
+            print(f"Error evaluating formula for category '{category.name}':", e)
 
-                # Build the gauge graph with the category result
-                if category.area.name != "Esthetic":
-                    draw_simple_gauge #TODO
-            
-            except Exception as e:
-                print(f"Error evaluating formula for Nutrition category:", e)
-                # Log this error in a logging system 
-    else:
-        print("oops there are no answers to evaluate!")
-        #log the exception to the logbook
+    # Save graphs to cache using user ID
+    cache_key = f"user_{user.id}_gauge_graphs"
+    cache.set(cache_key, gauge_graphs, timeout= 60 * 20)  # store user images for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
+    print(f"Cached gauge graphs for user {user.id} under key '{cache_key}'")
 
-def draw_simple_gauge(user_id, value, label, output_file="gauge.png"):
+
+
+def draw_simple_gauge(value, label):
     """
     Draw a simple gauge chart to represent a percentage value.
-
-    Args:
-        value (int or float): The percentage value (0-100) to display on the gauge.
-        label (str): The label to display beneath the gauge.
-        output_file (str): The file path where the gauge image will be saved.
     """
     # Normalize the value to be between 0 and 100
     value = max(0, min(100, value))
@@ -142,11 +115,4 @@ def draw_simple_gauge(user_id, value, label, output_file="gauge.png"):
     # Remove the lower part of the grid (make it appear like a semicircle)
     ax.set_ylim(0, 1)
 
-    # Save the figure to an in-memory buffer
-    buffer = BytesIO()
-    plt.savefig(buffer, format='png', dpi=300, bbox_inches="tight", transparent=True)
-    buffer.seek(0)
-    plt.close(fig)
-
-    # Serve the image as an HTTP response
-    return HttpResponse(buffer, content_type="image/png")
+    return fig

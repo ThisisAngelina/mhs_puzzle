@@ -3,4 +3,5 @@ from . import views as v
 
 urlpatterns = [
     path('quiz', v.quiz, name='quiz'),
+    path('results', v.display_results, name='results'),
 ]
