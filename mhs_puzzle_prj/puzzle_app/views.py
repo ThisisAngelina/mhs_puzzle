@@ -58,7 +58,7 @@ load_questions() # Grab quiz questions from the cache
 # Serve quiz questions, collect answers, call the answer-processing function
 def quiz(request):
     user = request.user
-    
+
     current_index = request.session.get('current_question_index', 0)
     user_answers = request.session.get('user_answers', {}) #storing the dictionary with the answers in the session 
 
@@ -175,12 +175,11 @@ def display_results(request):
 
     # Prepare data for the template
     images_data = []  # List to hold image and label pairs
-    for label, graph in gauge_graphs.items():
+    for label, graph_bytes in gauge_graphs.items():
         # Convert byte data to a base64 string
-        img_bytes = graph.getvalue()
-        img_base64 = base64.b64encode(img_bytes).decode('utf-8')
+        img_base64 = base64.b64encode(graph_bytes).decode('utf-8')
         # Append the label and base64 data
-        images_data.append({"label": label, "image": f"data:image/png;base64,{img_base64}"})
+        images_data.append({"label": label, "image": f"data:image/jpeg;base64,{img_base64}"})
 
     # Render the results template
     return render(request, "puzzle_app/results.html", {"images_data": images_data})

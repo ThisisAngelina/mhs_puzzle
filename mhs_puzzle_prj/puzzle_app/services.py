@@ -1,6 +1,8 @@
 # handle Category score calculation and graph creation 
 from django.db.models import Prefetch
 from django.core.cache import cache
+import matplotlib
+matplotlib.use("Agg") # need to set a non-GUI matplotlib backend to prevent threading issues
 import matplotlib.pyplot as plt
 from matplotlib import rcParams
 import numpy as np
@@ -8,6 +10,7 @@ from io import BytesIO
 
 from .models import Question, Category, CategoryResult, Answer
 from django.contrib.auth.models import User
+
 
 #TODO to refactor to use Redis, just like in views.py
 # Prefetch the querysets globally
