@@ -36,6 +36,7 @@ def process_scores(user, user_answers):
     Calculate category scores for a user and generate gauge graphs for display.
     """
     gauge_graphs = {}  # Dictionary to store graph images as byte streams
+    wheel_of_life = {} #Dictionary constructed to be used to make the Wheel of life later
 
     # Iterate over categories to calculate scores
     for category in categories:
@@ -61,27 +62,48 @@ def process_scores(user, user_answers):
             # Save the category score to the database
             CategoryResult.objects.create(user=user, category=category, score=category_score)
 
-            # Generate and save the gauge graph
-            gauge_plot = draw_simple_gauge(round(category_score, 2), category.name)
-            img_bytes = BytesIO()  # Create a byte stream
-            gauge_plot.savefig(img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
-            plt.close(gauge_plot)  # Close the plot to free memory
-            gauge_graphs[category.name] = img_bytes.getvalue()  # Store the byte stream in the cache
+            if category.area.name != "Esthetic":
+                # Generate and save the gauge graph
+                gauge_plot = draw_simple_gauge(round(category_score, 2), category.name)
+                gauge_img_bytes = BytesIO()  # Create a byte stream
+                gauge_plot.savefig(gauge_img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
+                plt.close(gauge_plot)  # Close the plot to free memory
+                gauge_graphs[category.name] = gauge_img_bytes.getvalue()  # Store the byte stream in the cache
+
+
+                # Generate and save the Wheel of Life graph
+                
+                wheel_of_life[category.name] = category_score #append the category's name and score to the dict used to make the wheel of life
 
         except Exception as e:
             print(f"Error evaluating formula for category '{category.name}':", e)
 
+    # Make a single Wheel of Life plot with all the categories in the same plot
+    try:
+        wheel_of_life_plot = draw_life_wheel(wheel_of_life)
+        wheel_plot_bytes = BytesIO()
+        wheel_of_life_plot.savefig(wheel_plot_bytes, format="jpeg", transparent=True, bbox_inches="tight")
+        plt.close(wheel_of_life_plot)
+        wheel_of_life_graph = wheel_plot_bytes.getvalue()
+    except Exception as e:
+        print(f"Error generating the Wheel of Life graph: {e}")
+        wheel_of_life_graph = None 
+
+
     # Save graphs to cache using user ID
-    cache_key = f"user_{user.id}_gauge_graphs"
-    cache.set(cache_key, gauge_graphs, timeout= 60 * 20)  # store user images for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
-    print(f"Cached gauge graphs for user {user.id} under key '{cache_key}'")
+    cache_key_gauge = f"user_{user.id}_gauge_graphs"
+    cache.set(cache_key_gauge, gauge_graphs, timeout= 60 * 20)  # store user's gauge graph images for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
+    print(f"Cached gauge graphs for user {user.id} under key '{cache_key_gauge}'")
+    
+    if wheel_of_life_graph:
+        cache_key_wheel = f"user_{user.id}_wheel_graph"
+        cache.set(cache_key_wheel, wheel_of_life_graph, timeout= 60 * 20)  # store user's wheel of life image for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
+        print(f"Cached wheel of life graph for user {user.id} under key '{cache_key_wheel}'")
 
 
 
-def draw_simple_gauge(value, label):
-    """
-    Draw a simple gauge chart to represent a percentage value.
-    """
+def draw_simple_gauge(value, label): #generic function : repeated for each category
+   
     # Normalize the value to be between 0 and 100
     value = max(0, min(100, value))
 
@@ -117,5 +139,46 @@ def draw_simple_gauge(value, label):
 
     # Remove the lower part of the grid (make it appear like a semicircle)
     ax.set_ylim(0, 1)
+
+    return fig
+
+
+def draw_life_wheel(wheel_of_life_data): # a sigle graph that contains all the categories. The input is a dict that looks like
+    #{'category_name': category_score}
+
+    # Create the life wheel chart
+    # Extract category names and scores
+    categories = list(wheel_of_life_data.keys())
+    scores = list(wheel_of_life_data.values())
+
+    # Ensure the wheel is circular by repeating the first category and score at the end
+    categories.append(categories[0])  # Close the loop for categories
+    scores.append(scores[0])  # Close the loop for scores
+
+    # Number of categories
+    num_categories = len(categories) - 1  # Exclude the duplicate for counting ticks
+
+    # Create the figure and polar subplot
+    fig, ax = plt.subplots(figsize=(6, 6), subplot_kw={"projection": "polar"})
+
+    # Set the angles for each category
+    angles = np.linspace(0, 2 * np.pi, len(categories))
+
+    # Plot the data as a closed polygon
+    ax.fill(angles, scores, color="#728bff", alpha=0.25)
+    ax.plot(angles, scores, color="#728bff", linewidth=2)
+
+    # Add gridlines and labels
+    ax.set_yticks(range(1, 11))  # Set radial ticks for scores (1 to 10)
+    ax.set_yticklabels(range(1, 11), fontsize=10)
+    ax.set_xticks(angles[:-1])  # Exclude the duplicated angle for ticks
+    ax.set_xticklabels(categories[:-1], fontsize=12, fontweight="bold")  # Exclude duplicate category for labels
+
+    # Add a title
+    ax.set_title("Wheel of Life", va="bottom", fontsize=14, fontweight="bold")
+
+    # Style the grid
+    ax.grid(color="gray", linestyle="--", linewidth=0.5)
+    ax.spines["polar"].set_visible(False)  # Remove the polar frame
 
     return fig

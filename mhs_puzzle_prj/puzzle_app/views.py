@@ -1,4 +1,6 @@
-#TODO Install Selenium. Make Wheel of life graph - https://matplotlib.org/stable/gallery/pie_and_polar_chart.
+#TODO Figure out how to simulate a user with Selenium - https://www.djangotricks.com/tricks/3bNUzYpfpCRR/
+#TODO Read about Django sessions
+#TODO Fix Wheel of Life graph
 #TODO make unit tests for all the functions
 from django.db.models import Prefetch
 from django.core.cache import cache
@@ -168,27 +170,34 @@ def quiz(request):
         return redirect('quiz')  # Allow the user to continue with the quiz
     
 
-#TODO don't display Esthetic area graphs
 #TODO check what happens if the same user submits the quiz twice
 #TODO check how the graphs are displayed on a small phone screen
 def display_results(request):
-    # Retrieve cached images using the user ID
-    cache_key = f"user_{request.user.id}_gauge_graphs"
-    print("the key with which to search the cache is ", cache_key)
-    gauge_graphs = cache.get(cache_key)
 
-    if not gauge_graphs:
-        # If no graphs are found in the cache, return an error or handle accordingly
-        return render(request, "puzzle_app/error.html", {"message": "No results found. Please complete the quiz first."})
+    # Retrieve gauge graphs
+  
+    cache_key_gauge = f"user_{request.user.id}_gauge_graphs"
+    print("the key with which to search the cache for the gauge graphs is ", cache_key_gauge)
+    gauge_graphs = cache.get(cache_key_gauge)
 
     # Prepare data for the template
-    images_data = []  # List to hold image and label pairs
+    gauge_images_data = []  # List to hold image and label pairs
     for label, graph_bytes in gauge_graphs.items():
         # Convert byte data to a base64 string
         img_base64 = base64.b64encode(graph_bytes).decode('utf-8')
         # Append the label and base64 data
-        images_data.append({"label": label, "image": f"data:image/jpeg;base64,{img_base64}"})
+        gauge_images_data.append({"label": label, "image": f"data:image/jpeg;base64,{img_base64}"})
+
+    # Retrieve wheel of life graph
+    cache_key_wheel = f"user_{request.user.id}_wheel_graph"
+    print("the key with which to search the cache for the wheel of life gtraph is ", cache_key_wheel)
+    wheel_of_life_graph = cache.get(cache_key_wheel)
+
+    if not gauge_graphs and not wheel_of_life_graph:
+        # If no graphs are found in the cache, return an error or handle accordingly
+        return render(request, "puzzle_app/error.html", {"message": "No results found. Please complete the quiz first."})
+
 
     # Render the results template
-    return render(request, "puzzle_app/results.html", {"images_data": images_data})
+    return render(request, "puzzle_app/results.html", {"gauge_images": gauge_images_data, "wheel_image" : wheel_of_life_graph})
 

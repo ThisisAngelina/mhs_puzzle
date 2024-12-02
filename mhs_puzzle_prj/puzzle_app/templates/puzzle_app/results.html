@@ -11,12 +11,12 @@
 <h1 class="text-center mb-4">Your results:</h1>
 <!-- Display graphs -->
     <div class="container mt-5">
-        <h2>Your diagnostics:/h2>
+        <h2>Your diagnostics:</h2>
         <div class="row">
-            {% for data in images_data %}
+            {% for graph in gauge_images %}
                 <div class="col-md-4 text-center mb-4">
-                    <img src="{{ data.image }}" alt="{{ data.label }} Gauge" class="img-fluid" style="border: 2px solid #728bff; border-radius: 10px;">
-                    <h5 class="mt-2">{{ data.label }}</h5>
+                    <img src="{{ graph.image }}" alt="{{ graph.label }} Gauge" class="img-fluid" style="border: 2px solid #728bff; border-radius: 10px;">
+                    <h5 class="mt-2">{{ graph.label }}</h5>
                 </div>
             {% endfor %}
         </div>
@@ -24,7 +24,7 @@
 
     <!-- Display wheel of life graph -->
     <div class="container mt-5">
-        <img src="" alt="the wheel of life">
+        <img src="{{ wheel_image }}" alt="the wheel of life">
     </div>
  
 <h2 class="text-center mb-4">Your priority area:</h2>
