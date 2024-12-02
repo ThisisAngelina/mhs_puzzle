@@ -1,0 +1,35 @@
+{% extends 'puzzle_app/layout.html' %}
+{% load static %}
+
+{% block content %}
+<!-- Display messages (success or error alerts) -->
+{% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-info text-center" role="alert">
+            {{ message }}
+        </div>
+    {% endfor %}
+{% endif %}
+
+<!-- Text -->
+<div class="text-center mt-3">
+    <h2 style="font-style: italic;"> 
+        Test how you are doing along the three pillars of skin health.<br>
+        See your results visually. Get personalized recommendations.
+    </h2>
+</div>
+
+<!-- Image -->
+<div class="d-flex justify-content-center align-items-center mt-5 mb-4">
+    <img src="{% static 'puzzle_app/images/three_pillars.jpg' %}" 
+         alt="The three pillars of skin health according to MHS" 
+         class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
+
+<!-- Button to start quiz -->
+<div class="text-center mt-4 mb-5">
+    <a href="{% url 'quiz' %}" class="btn btn-primary btn-lg">
+        Take Skin Quiz
+    </a>
+</div>
+{% endblock %}

@@ -1,4 +1,4 @@
-#TODO check redis caching, make results.html template. transform gauge graphs into jpegs, display them. Make Wheel of life graph - https://matplotlib.org/stable/gallery/pie_and_polar_chart.
+#TODO Install Selenium. Make Wheel of life graph - https://matplotlib.org/stable/gallery/pie_and_polar_chart.
 #TODO make unit tests for all the functions
 from django.db.models import Prefetch
 from django.core.cache import cache
@@ -11,6 +11,12 @@ import base64
 
 from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
 from . import services
+
+#display the home page
+def home(request):
+    return render(request, 'puzzle_app/home.html')
+
+
 
 
 # Get quiz questions form cache - Prefetch questions and answers, serialize them, and store in Redis.
@@ -162,7 +168,9 @@ def quiz(request):
         return redirect('quiz')  # Allow the user to continue with the quiz
     
 
-
+#TODO don't display Esthetic area graphs
+#TODO check what happens if the same user submits the quiz twice
+#TODO check how the graphs are displayed on a small phone screen
 def display_results(request):
     # Retrieve cached images using the user ID
     cache_key = f"user_{request.user.id}_gauge_graphs"
