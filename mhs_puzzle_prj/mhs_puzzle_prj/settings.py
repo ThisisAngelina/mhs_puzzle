@@ -16,21 +16,17 @@ from pathlib import Path
 BASE_DIR = Path(__file__).resolve().parent.parent
 
 
-# Quick-start development settings - unsuitable for production
-# See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
-
-# SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-4z*zjjjivot_@z6(()^3quz66161u(%o4u1nc6-n9(s)3bhc35'
-
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
-
+DEBUG = True 
+ 
 ALLOWED_HOSTS = []
 
 INTERNAL_IPS = [
     '127.0.0.1',
 ]
 
+# SECURITY WARNING: keep the secret key used in production secret!
+SECRET_KEY = 'django-insecure-4z*zjjjivot_@z6(()^3quz66161u(%o4u1nc6-n9(s)3bhc35'
 
 # Application definition
 
@@ -56,6 +52,10 @@ MIDDLEWARE = [
     'django.contrib.messages.middleware.MessageMiddleware',
     'django.middleware.clickjacking.XFrameOptionsMiddleware',
 ]
+
+SESSION_ENGINE = "django.contrib.sessions.backends.cache" #storing session data in cache as opposed to in the db, because we mostly use sessions in this project to move the user along the quiz
+
+SESSION_CACHE_ALIAS = "default"
 
 ROOT_URLCONF = 'mhs_puzzle_prj.urls'
 
@@ -94,6 +94,8 @@ CACHES = {
         "LOCATION": "redis://127.0.0.1:6379",
     }
 }
+
+SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # the session persists for one week 
 
 
 # Password validation
@@ -136,3 +138,8 @@ STATIC_URL = 'static/'
 # https://docs.djangoproject.com/en/5.1/ref/settings/#default-auto-field
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+
+#TODO activate for production
+#SESSION_COOKIE_SECURE = True  # Ensures cookies are only sent over HTTPS
+#SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
+#SESSION_COOKIE_SAMESITE = "Lax"  # Helps prevent CSRF attacks

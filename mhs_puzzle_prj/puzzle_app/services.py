@@ -51,40 +51,34 @@ def process_scores(user, user_answers):
                 question_alphabetic_id = question.alphabetic_id
                 score = float(user_answers[question_id_str])
                 values[question_alphabetic_id] = score
-
-        print(f"Values for category '{category.name}':", values)
-
         try:
             # Evaluate the formula
             category_score = eval(formula, {}, values)
-            print(f"Score for the {category.name} category:", category_score)
 
             # Save the category score to the database
             CategoryResult.objects.create(user=user, category=category, score=category_score)
 
             if category.area.name != "Esthetic":
-                # Generate and save the gauge graph
+                # Generate and save the gauge graph for the category
                 gauge_plot = draw_simple_gauge(round(category_score, 2), category.name)
-                gauge_img_bytes = BytesIO()  # Create a byte stream
+                gauge_img_bytes = BytesIO()  # Create a byte stream object
                 gauge_plot.savefig(gauge_img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
                 plt.close(gauge_plot)  # Close the plot to free memory
                 gauge_graphs[category.name] = gauge_img_bytes.getvalue()  # Store the byte stream in the cache
-
-
-                # Generate and save the Wheel of Life graph
                 
-                wheel_of_life[category.name] = category_score #append the category's name and score to the dict used to make the wheel of life
+                wheel_of_life[category.name] = round(category_score, 2) #append the category's name and score to the dict used to make the wheel of life
 
         except Exception as e:
-            print(f"Error evaluating formula for category '{category.name}':", e)
+            print(f"Error processing category '{category.name}': {e}")
 
     # Make a single Wheel of Life plot with all the categories in the same plot
+    print("the data to be used to make the wheel of life is the dict ", wheel_of_life)
     try:
         wheel_of_life_plot = draw_life_wheel(wheel_of_life)
         wheel_plot_bytes = BytesIO()
         wheel_of_life_plot.savefig(wheel_plot_bytes, format="jpeg", transparent=True, bbox_inches="tight")
         plt.close(wheel_of_life_plot)
-        wheel_of_life_graph = wheel_plot_bytes.getvalue()
+        wheel_of_life_graph = wheel_plot_bytes.getvalue() # Store the byte stream in the cache
     except Exception as e:
         print(f"Error generating the Wheel of Life graph: {e}")
         wheel_of_life_graph = None 
@@ -93,12 +87,11 @@ def process_scores(user, user_answers):
     # Save graphs to cache using user ID
     cache_key_gauge = f"user_{user.id}_gauge_graphs"
     cache.set(cache_key_gauge, gauge_graphs, timeout= 60 * 20)  # store user's gauge graph images for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
-    print(f"Cached gauge graphs for user {user.id} under key '{cache_key_gauge}'")
     
     if wheel_of_life_graph:
         cache_key_wheel = f"user_{user.id}_wheel_graph"
         cache.set(cache_key_wheel, wheel_of_life_graph, timeout= 60 * 20)  # store user's wheel of life image for 20 minutes #if the user takes the quiz again, Django automatically overrides the cache so the user will see thier most updated graphs 
-        print(f"Cached wheel of life graph for user {user.id} under key '{cache_key_wheel}'")
+
 
 
 
@@ -148,6 +141,9 @@ def draw_life_wheel(wheel_of_life_data): # a sigle graph that contains all the c
 
     # Create the life wheel chart
     # Extract category names and scores
+    if not wheel_of_life_data:
+        raise ValueError("Wheel of Life data is empty.")
+
     categories = list(wheel_of_life_data.keys())
     scores = list(wheel_of_life_data.values())
 
@@ -170,7 +166,7 @@ def draw_life_wheel(wheel_of_life_data): # a sigle graph that contains all the c
 
     # Add gridlines and labels
     ax.set_yticks(range(1, 11))  # Set radial ticks for scores (1 to 10)
-    ax.set_yticklabels(range(1, 11), fontsize=10)
+    ax.set_yticklabels([''] * 10)  # Set radial tick labels to empty strings to remove them
     ax.set_xticks(angles[:-1])  # Exclude the duplicated angle for ticks
     ax.set_xticklabels(categories[:-1], fontsize=12, fontweight="bold")  # Exclude duplicate category for labels
 
