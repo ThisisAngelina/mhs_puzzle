@@ -1,66 +1,24 @@
 #TODO Figure out how to simulate a user with Selenium - https://www.djangotricks.com/tricks/3bNUzYpfpCRR/
-#TODO Fix Wheel of Life graph
 #TODO make unit tests for all the functions
+
+import json
+
 from django.db.models import Prefetch
 from django.core.cache import cache
-import json
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.utils.timezone import now
-import base64
 
 from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
-from . import services
+from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs
 
 #display the home page
 def home(request):
+    ''' The home page just displays a welcome image and a button to start the quiz'''
     return render(request, 'puzzle_app/home.html')
 
-
-
-
-# Get quiz questions form cache - Prefetch questions and answers, serialize them, and store in Redis.
-def load_questions():
-    global question_count #the number of quiz questions
-
-    questions_cache_key = "quiz_questions"
-
-    # Check if questions are already cached
-    cached_questions = cache.get(questions_cache_key)
-
-    if not cached_questions:
-        # Prefetch questions and answers
-        questions = Question.objects.select_related('category', 'category__area').prefetch_related(
-            Prefetch('answer_set', queryset=Answer.objects.all())
-        )
-        print("questions got fetched from the db")
-
-        # Serialize all questions into JSON-like structures
-        questions_dict = {
-            question.id: {
-                "content": question.content,
-                "category": question.category.name,
-                "area": question.category.area.name,
-                "answers": [
-                    {"answer_text": answer.answer_text, "score": answer.score} for answer in question.answer_set.all()
-                ],
-            }
-            for question in questions
-        }
-
-        # Cache serialized data
-        cache.set(questions_cache_key, json.dumps(questions_dict), timeout=60 * 60 * 24 * 30)  # Cache for 30 days
-        print("Questions cached in Redis.")
-
-    else:
-        print("Questions loaded from Redis.")
-
-    # Set question count
-    question_count = len(json.loads(cached_questions) if cached_questions else questions_dict)
-
-
-load_questions() # Grab quiz questions from the cache
+_load_questions() # Grab quiz questions from the cache
 
 # Serve quiz questions, collect answers, call the answer-processing function
 def quiz(request):
@@ -93,7 +51,7 @@ def quiz(request):
             new_quiz_submission.save()
        
             # Process the data to calculate the scores and produce the graphs
-            services.process_scores(user, user_answers)
+            _process_scores(user, user_answers)
             request.session.pop('user_answers', None)  # Clear answers after processing
 
             # Redirect the user to the results page
@@ -167,44 +125,17 @@ def quiz(request):
         return redirect('quiz')  # Allow the user to continue with the quiz
     
 
-#TODO check what happens if the same user submits the quiz twice
 #TODO check how the graphs are displayed on a small phone screen
 def display_results(request):
 
-    # Retrieve gauge graphs
-  
-    cache_key_gauge = f"user_{request.user.id}_gauge_graphs"
-    print("the key with which to search the cache for the gauge graphs is ", cache_key_gauge)
-    gauge_graphs = cache.get(cache_key_gauge)
+    graph_context = _display_graphs(request.user.id)
+    print("the context to pass to the template is ", graph_context)
 
-    # Prepare data for the template
-    gauge_images_data = []  # List to hold image and label pairs
-    for label, graph_bytes in gauge_graphs.items():
-        # Convert byte data to a base64 string
-        img_base64 = base64.b64encode(graph_bytes).decode('utf-8')
-        # Append the label and base64 data
-        gauge_images_data.append({"label": label, "image": f"data:image/jpeg;base64,{img_base64}"})
-
-    # Retrieve wheel of life graph
-    cache_key_wheel = f"user_{request.user.id}_wheel_graph"
-    print("the key with which to search the cache for the wheel of life gtraph is ", cache_key_wheel)
-    wheel_of_life_graph_encoded = cache.get(cache_key_wheel)
-    if wheel_of_life_graph_encoded:
-        try:
-           wheel_base64 = base64.b64encode(wheel_of_life_graph_encoded).decode('utf-8')
-           wheel_of_life_graph = f"data:image/jpeg;base64,{wheel_base64}"
-        except Exception as e:
-            print("Error in decoding the wheel of life image", e)
-
-    else:
-        print("error in grabbing the encoded wheel image from cache")
-
-
-    if not gauge_graphs and not wheel_of_life_graph:
-        # If no graphs are found in the cache, return an error or handle accordingly
+    if not graph_context:
+        # if there are no graphs to display
         return render(request, "puzzle_app/error.html", {"message": "No results found. Please complete the quiz first."})
 
 
     # Render the results template
-    return render(request, "puzzle_app/results.html", {"gauge_images": gauge_images_data, "wheel_image" : wheel_of_life_graph})
+    return render(request, "puzzle_app/results.html", graph_context)
 
