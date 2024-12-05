@@ -31,6 +31,7 @@ def _load_questions():
         # Serialize all questions into JSON-like structures
         questions_dict = {
             question.id: {
+                "alphabetic_id": question.alphabetic_id,
                 "content": question.content,
                 "category": question.category.name,
                 "formula": question.category.formula,
@@ -74,6 +75,7 @@ def _process_scores(user, user_answers):
 
     # Prepare category-specific data
     for question_id, data in cached_questions_data.items():
+        alphabetic_id = data["alphabetic_id"]
         category_name = data["category"]
         formula = data["formula"]
         area_name = data["area"]
@@ -89,8 +91,8 @@ def _process_scores(user, user_answers):
         # Populate question scores if the user answered this question
         if str(question_id) in user_answers:
             question_score = float(user_answers[str(question_id)])
-            category_scores[category_name]["values"][question_id] = question_score
-
+            category_scores[category_name]["values"][alphabetic_id] = question_score
+    print("the category_scores dict looks like ", category_scores)
     # Process each category's data
     for category_name, category_data in category_scores.items():
         formula = category_data["formula"]
@@ -100,10 +102,13 @@ def _process_scores(user, user_answers):
         try:
             # Evaluate the formula
             category_score = eval(formula, {}, values)
+            print(f"the score for the {category_name} category is {category_score}")
+
 
             # Save the category score to the database
             category_obj = Category.objects.get(name=category_name)  # Retrieve the Category instance
             CategoryResult.objects.create(user=user, category=category_obj, score=category_score)
+            print("the category score has been successfully saved")
 
             if area_name != "Esthetic":
                 # Generate and save the gauge graph for the category
@@ -112,7 +117,7 @@ def _process_scores(user, user_answers):
                 gauge_plot.savefig(gauge_img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
                 plt.close(gauge_plot)  # Close the plot to free memory
                 gauge_graphs[category_name] = gauge_img_bytes.getvalue()  # Store the byte stream in the cache
-
+                print("the gauge graphs have been constructed successfully")
                 # Append the category's name and score to the dictionary used to make the Wheel of Life
                 wheel_of_life[category_name] = round(category_score, 2)
 
