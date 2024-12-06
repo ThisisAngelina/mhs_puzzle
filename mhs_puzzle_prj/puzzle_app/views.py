@@ -1,16 +1,18 @@
 #TODO Figure out how to simulate a user with Selenium - https://www.djangotricks.com/tricks/3bNUzYpfpCRR/
-#TODO make unit tests for all the functions
 
 import json
 
-from django.db.models import Prefetch
 from django.core.cache import cache
+from django.contrib.auth.decorators import login_required
 from django.http import HttpResponse
-from django.shortcuts import redirect, render
+from django.shortcuts import redirect, render, HttpResponseRedirect
 from django.contrib import messages
+from django.urls import reverse
 from django.utils.timezone import now
+from django.contrib.auth import authenticate, login, logout
+from django.db import IntegrityError
 
-from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
+from .models import User, QuestionResult, SurveyCompletion
 from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs
 
 #display the home page
@@ -20,8 +22,9 @@ def home(request):
 
 _load_questions() # Grab quiz questions from the cache
 
-# Serve quiz questions, collect answers, call the answer-processing function
+@login_required
 def quiz(request):
+    '''Serve quiz questions, collect answers, call the answer-processing function'''
     user = request.user
 
     current_index = request.session.get('current_question_index', 0)
@@ -126,7 +129,9 @@ def quiz(request):
     
 
 #TODO check how the graphs are displayed on a small phone screen
+@login_required
 def display_results(request):
+    ''' Display quiz results: graphs and recommendations '''
 
     graph_context = _display_graphs(request.user.id)
     print("the context to pass to the template is ", graph_context)
@@ -139,3 +144,56 @@ def display_results(request):
     # Render the results template
     return render(request, "puzzle_app/results.html", graph_context)
 
+
+
+def register(request):
+    ''' Create a new user account '''
+    if request.method == "POST":
+        email = request.POST["email"]
+        username = request.POST["username"]
+
+        # Ensure password matches confirmation
+        password = request.POST["password"]
+        confirmation = request.POST["confirmation"]
+        if password != confirmation:
+            return render(request, "puzzle_app/authenticate/register.html", {
+                "message": "Oops! Passwords must match."
+            })
+
+        # Attempt to create new user
+        try:
+            user = User.objects.create_user(email=email, username=username, password=password)
+            user.save()
+        except IntegrityError as e: # We require email addresses to be unique
+            print(f"{e}: a user with this email address already exists")
+            return render(request, "puzzle_app/authenticate/register.html", {
+                "message": "Email address already taken."
+            })
+        login(request, user)
+        return HttpResponseRedirect(reverse("index"))
+    else: # User wants to view the page
+        return render(request, "puzzle_app/authenticate/register.html")
+
+def login_view(request):
+    if request.method == "POST":
+
+        # Attempt to sign user in
+        email = request.POST["email"]
+        password = request.POST["password"]
+        user = authenticate(request, username=email, password=password)
+
+        # Check if authentication successful
+        if user is not None:
+            login(request, user)
+            return HttpResponseRedirect(reverse("index"))
+        else:
+            return render(request, "puzzle_app/authenticate/login.html", {
+                "message": "Invalid email and/or password."
+            })
+    else:
+        return render(request, "puzzle_app/authenticate/login.html")
+
+
+def logout_view(request):
+    logout(request)
+    return HttpResponseRedirect(reverse("home"))

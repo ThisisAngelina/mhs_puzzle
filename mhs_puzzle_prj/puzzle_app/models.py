@@ -1,5 +1,13 @@
 from django.db import models
-from django.contrib.auth.models import User
+from django.contrib.auth.models import AbstractUser
+
+
+class User(AbstractUser):
+    email = models.EmailField(unique=True)
+    avatar = models.ImageField( blank=True, null=True)  
+
+    def __str__(self):
+        return self.username
 
 class SurveyCompletion(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
