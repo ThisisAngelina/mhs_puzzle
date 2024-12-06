@@ -47,12 +47,10 @@ def _load_questions():
         cache.set(questions_cache_key, json.dumps(questions_dict), timeout=60 * 60 * 24 * 30)  # Cache for 30 days
         print("Questions cached in Redis are ", questions_dict)
 
-    else:
-        print("Questions loaded from Redis. The loaded questions are ", cached_questions)
 
     # Set question count
     question_count = len(json.loads(cached_questions) if cached_questions else questions_dict)
-    print("the questions dictionary is")
+
 
 
 _load_questions() 
@@ -92,7 +90,6 @@ def _process_scores(user, user_answers):
         if str(question_id) in user_answers:
             question_score = float(user_answers[str(question_id)])
             category_scores[category_name]["values"][alphabetic_id] = question_score
-    print("the category_scores dict looks like ", category_scores)
     # Process each category's data
     for category_name, category_data in category_scores.items():
         formula = category_data["formula"]
@@ -101,14 +98,20 @@ def _process_scores(user, user_answers):
 
         try:
             # Evaluate the formula
+            print(f"The formula is: {formula}")
+            print(f"The values to plug into the formula are: {values}")
             category_score = eval(formula, {}, values)
             print(f"the score for the {category_name} category is {category_score}")
 
 
             # Save the category score to the database
-            category_obj = Category.objects.get(name=category_name)  # Retrieve the Category instance
-            CategoryResult.objects.create(user=user, category=category_obj, score=category_score)
-            print("the category score has been successfully saved")
+            try:
+                category_obj = Category.objects.get(name=category_name)
+                CategoryResult.objects.create(user=user, category=category_obj, score=category_score)
+                print("the category score has been successfully saved")
+            except Category.DoesNotExist:
+                print(f"Category '{category_name}' not found in the database.")
+                continue
 
             if area_name != "Esthetic":
                 # Generate and save the gauge graph for the category

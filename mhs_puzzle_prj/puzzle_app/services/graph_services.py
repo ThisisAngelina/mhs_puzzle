@@ -7,7 +7,7 @@ from matplotlib import rcParams
 import numpy as np
 
 
-#
+
 def _draw_single_gauge(value, label): 
     ''' Draws one gauge graph (per category) '''
    

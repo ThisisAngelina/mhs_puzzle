@@ -9,6 +9,7 @@ https://docs.djangoproject.com/en/5.1/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/5.1/ref/settings/
 """
+import sys
 
 from pathlib import Path
 
@@ -88,12 +89,31 @@ DATABASES = {
     }
 }
 
-CACHES = {
-    "default": {
-        "BACKEND": "django.core.cache.backends.redis.RedisCache",
-        "LOCATION": "redis://127.0.0.1:6379",
+
+
+# Define the Redis configuration for production vs testing
+REDIS_HOST = "127.0.0.1"
+REDIS_PORT = "6379"  # Redis port
+REDIS_DB = "0"  # Default database for production
+
+
+TEST_REDIS_DB = "1"  # Separate Redis database for tests
+
+if 'test' in sys.argv:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': f"redis://{REDIS_HOST}:{REDIS_PORT}/{TEST_REDIS_DB}",  #for unit testing
+        }
     }
-}
+else:
+    CACHES = {
+        'default': {
+            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
+            'LOCATION': f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",  #"production" (i.e. manual testing)
+    }
+    }
+
 
 SESSION_COOKIE_AGE = 60 * 60 * 24 * 7  # the session persists for one week 
 

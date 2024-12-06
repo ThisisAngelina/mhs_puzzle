@@ -1,19 +1,33 @@
-#run unit tests every time I push to GitHub
-name: Testing
-on: push
+name: Django CI
+
+on:
+  push:
+    branches:
+      - main
+  pull_request:
+    branches:
+      - main
 
 jobs:
   test:
     runs-on: ubuntu-latest
+    services:
+      redis:
+        image: redis:latest
+        ports:
+          - 6379:6379
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v3
       - name: Set up Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.13.0'  
+          python-version: '3.10'
       - name: Install dependencies
         run: |
-          pip3 install --user django
-          pip3 install --user -r requirements.txt
-      - name: Run Django unit tests
-        run: python3 manage.py test
+          python -m pip install --upgrade pip
+          pip install -r requirements.txt
+      - name: Run tests
+        env:
+          REDIS_HOST: 127.0.0.1  # Redis will run on localhost
+          REDIS_PORT: 6379       # Default Redis port
+        run: python manage.py test
