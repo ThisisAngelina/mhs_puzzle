@@ -30,4 +30,4 @@ jobs:
         env:
           REDIS_HOST: 127.0.0.1  # Redis will run on localhost
           REDIS_PORT: 6379       # Default Redis port
-        run: python mhs_puzzle_prj/manage.py test puzzle_app/unit_tests
+        run: python mhs_puzzle_prj/manage.py test

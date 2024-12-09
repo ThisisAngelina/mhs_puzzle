@@ -76,7 +76,6 @@ TEMPLATES = [
     },
 ]
 
-
 WSGI_APPLICATION = 'mhs_puzzle_prj.wsgi.application'
 
 
