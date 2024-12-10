@@ -217,7 +217,7 @@ def _display_graphs(user_id):
     return {"gauge_images": gauge_images_data, "wheel_image": wheel_of_life_graph}
  
 def _display_priority_category(user_id):
-    priority_category_cache_key = "user_{user.id}_priority_category"
+    priority_category_cache_key = "user_{user_id}_priority_category"
     try:
         priority_category = cache.get(priority_category_cache_key)
     except Exception as e:
