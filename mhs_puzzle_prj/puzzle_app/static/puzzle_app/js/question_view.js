@@ -44,7 +44,6 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
 
-        //TODO submit the form - check the js mail implementation
 
         if (!allQuestionsAnswered) {
             event.preventDefault();

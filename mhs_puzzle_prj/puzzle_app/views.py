@@ -125,8 +125,6 @@ def quiz(request):
         request.session['user_answers'] = user_answers  # Save updated answers in the session
         return redirect('quiz')  # Allow the user to continue with the quiz
     
-
-#TODO check how the graphs are displayed on a small phone screen
 def display_results(request):
     '''Display graphs, priority category and recomemendations'''
 

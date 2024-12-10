@@ -1,5 +1,4 @@
 # handle Category score calculation and graph creation 
-#TODO to pass the question's alphabetic id to the cache and to the _process_scores function
 import json
 import base64
 from io import BytesIO
@@ -127,6 +126,7 @@ def _process_scores(user, user_answers):
                 wheel_of_life[category_name] = round(category_score, 2)
 
         except Exception as e:
+            category_score = 50.0
             print(f"Error processing category '{category_name}': {e}")
 
 
