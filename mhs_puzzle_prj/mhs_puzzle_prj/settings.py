@@ -41,6 +41,9 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'django_extensions',
     'debug_toolbar',
+    'crispy_forms',
+    'crispy_bootstrap5',
+
 ]
 
 MIDDLEWARE = [
@@ -163,3 +166,5 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #SESSION_COOKIE_SECURE = True  # Ensures cookies are only sent over HTTPS
 #SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
 #SESSION_COOKIE_SAMESITE = "Lax"  # Helps prevent CSRF attacks
+
+CRISPY_TEMPLATE_PACK = 'bootstrap5'

@@ -9,6 +9,10 @@ from django.http import HttpResponse
 from django.shortcuts import redirect, render
 from django.contrib import messages
 from django.utils.timezone import now
+from django.contrib.auth.forms import UserCreationForm
+from django.contrib.auth.decorators import login_required
+from django.urls import reverse_lazy
+from django.contrib.auth.views import LogoutView, LoginView
 
 from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
 from django.contrib.auth.models import User
@@ -22,6 +26,7 @@ def home(request):
 _load_questions() # Grab quiz questions from the cache
 
 # Serve quiz questions, collect answers, call the answer-processing function
+@login_required
 def quiz(request):
     user = request.user
 
@@ -125,6 +130,8 @@ def quiz(request):
         request.session['user_answers'] = user_answers  # Save updated answers in the session
         return redirect('quiz')  # Allow the user to continue with the quiz
     
+
+@login_required   
 def display_results(request):
     '''Display graphs, priority category and recomemendations'''
 
@@ -155,3 +162,34 @@ def display_results(request):
     # Render the results template
     return render(request, "puzzle_app/results.html", context)
 
+def register(request):
+    ''' Create a new user account. '''
+    if request.method == 'POST':
+        form = UserCreationForm(request.POST)
+        if form.is_valid():
+            form.save()
+            messages.success(request, "Registration successful! You can now log in.")
+            return redirect('login')
+    else:
+        form = UserCreationForm()
+    return render(request, 'puzzle_app/register.html', {'form': form})
+
+class CustomLoginView(LoginView):
+    template_name = 'puzzle_app/login.html'  
+    #redirect_authenticated_user = True  
+
+    def form_valid(self, form):
+        # Add a success message
+        messages.success(self.request, "Logged in successfully.")
+        return super().form_valid(form)
+
+    def get_success_url(self):
+        return redirect('quiz')
+
+class CustomLogoutView(LogoutView):
+    ''' Customize Django's built-in LogoutView class with custom rerouting and message'''
+    next_page = reverse_lazy('home')  # Redirect to home after logout
+
+    def dispatch(self, request, *args, **kwargs):
+        messages.success(request, "Logged out successfully.")
+        return super().dispatch(request, *args, **kwargs)
