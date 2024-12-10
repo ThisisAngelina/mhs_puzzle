@@ -11,6 +11,7 @@ from django.core.cache import cache
 from ..models import Question, Category, CategoryResult, Answer
 
 from .graph_services import _draw_life_wheel, _draw_single_gauge
+from .recommendation_services import _generate_recommendation
 
 def _load_questions():
     ''' Gets quiz questions form cache in the form of a dictionary stored in cached_questions - Prefetch questions and answers, serialize them, and store in Redis. '''
@@ -64,6 +65,7 @@ def _process_scores(user, user_answers):
     """
     Calculate category scores for a user and generate gauge graphs for display.
     """
+    user_data_for_gpt = {} # Dictinary to pass to the Chat GPT recommendation generating function
     gauge_graphs = {}  # Dictionary to store graph images as byte streams
     wheel_of_life = {}  # Dictionary to construct the Wheel of Life later
 
@@ -127,6 +129,30 @@ def _process_scores(user, user_answers):
         except Exception as e:
             print(f"Error processing category '{category_name}': {e}")
 
+
+    # Establish the priority area:
+    priority_category = min(wheel_of_life, key=wheel_of_life.get)
+    
+    print("the priority category is ", priority_category)
+    cache.set("user_{user.id}_priority_category", priority_category)
+
+    # Add the necessary data to the dictionary passed later to Chat GPT
+    user_data_for_gpt["priority_category"] = priority_category
+    user_data_for_gpt["category_scores"] = wheel_of_life
+
+    # Extract answers for questions in the priority category (to avoid passing all the user's answers to Chat GPT, to save tokens :)
+    answers_of_priority_category = {}
+    for question_id, data in cached_questions_data.items():
+        if data["category"] == priority_category and str(question_id) in user_answers:
+            selected_answer_score = user_answers[str(question_id)]
+            selected_answer = next(
+                (answer for answer in data["answers"] if answer["score"] == selected_answer_score), None
+            )
+            if selected_answer:
+                answers_of_priority_category[data["content"]] = selected_answer["answer_text"]
+
+    user_data_for_gpt["answers_of_priority_category"] = answers_of_priority_category
+
     # Generate the Wheel of Life graph
     print("The data to be used to make the Wheel of Life is the dictionary:", wheel_of_life)
     try:
@@ -147,6 +173,14 @@ def _process_scores(user, user_answers):
         cache_key_wheel = f"user_{user.id}_wheel_graph"
         cache.set(cache_key_wheel, wheel_of_life_graph, timeout=60 * 20)  # Store user's Wheel of Life in cache for 20 minutes
 
+    print("the data to pass to Chat GPT is ", user_data_for_gpt)
+
+    # Pass the user data to the recommendation-generating function and save the recommendation in cache
+    try:
+        recommendation = _generate_recommendation(user_data_for_gpt)
+    except:
+        recommendation = ""
+    cache.set(f"user_{user.id}_recommendation", recommendation)
 
 def _display_graphs(user_id):
 
@@ -182,3 +216,20 @@ def _display_graphs(user_id):
 
     return {"gauge_images": gauge_images_data, "wheel_image": wheel_of_life_graph}
  
+def _display_priority_category(user_id):
+    priority_category_cache_key = "user_{user.id}_priority_category"
+    try:
+        priority_category = cache.get(priority_category_cache_key)
+    except Exception as e:
+            print("Error retrieving priority category from cache", e)
+            return None
+    return {"priority_category": priority_category}
+
+def _display_recommendation(user_id):
+    recommendation_cache_key = f"user_{user_id}_recommendation"
+    try:
+        recommendation = cache.get(recommendation_cache_key)
+    except Exception as e:
+            print("Error retrieving recommendation from cache", e)
+            return None
+    return {"recommendation": recommendation}

@@ -9,9 +9,15 @@
     {% endfor %}
 {% endif %}
 <h1 class="text-center mb-4">Your results:</h1>
+<h2 class="text-center mb-4">Your priority area:</h2>
+<p class="text-center font-weight-bold"> {{ priority_category }} </p>
+
+<h2 class="text-center mb-4">My Healthy Skin recommends:</h2>
+<p> {{ recommendation }} </p>
+
 <!-- Display graphs -->
     <div class="container mt-5">
-        <h2>Your diagnostics:</h2>
+        <h2 class="text-center mb-4">Your diagnostics:</h2>
         <div class="row">
             {% for graph in gauge_images %}
                 <div class="col-md-4 text-center mb-4">
@@ -27,11 +33,6 @@
         <img src="{{ wheel_image }}" alt="the wheel of life" class="img-fluid" style="border: 2px solid #728bff; border-radius: 10px;">
     </div>
  
-<h2 class="text-center mb-4">Your priority area:</h2>
-<p> {{ priority_area }} </p>
-
-<h2 class="text-center mb-4">My Healthy Skin recommends:</h2>
-<p> {{ recommendations }} </p>
 
 
 {% endblock %}

@@ -11,7 +11,8 @@ from django.contrib import messages
 from django.utils.timezone import now
 
 from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
-from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs
+from django.contrib.auth.models import User
+from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs, _display_priority_category, _display_recommendation
 
 #display the home page
 def home(request):
@@ -127,15 +128,32 @@ def quiz(request):
 
 #TODO check how the graphs are displayed on a small phone screen
 def display_results(request):
+    '''Display graphs, priority category and recomemendations'''
 
-    graph_context = _display_graphs(request.user.id)
-    print("the context to pass to the template is ", graph_context)
-
-    if not graph_context:
+    # Graphs
+    graphs = _display_graphs(request.user.id)
+    print("the context to pass to the template is ", graphs)
+    
+    if not graphs:
         # if there are no graphs to display
         return render(request, "puzzle_app/error.html", {"message": "No results found. Please complete the quiz first."})
+    
+    # Priority category (text)
+    priority_category = _display_priority_category(request.user.id)
+    if priority_category == None:
+        priority_category = ""
+    print("the priority category is ", priority_category)
 
+    recommendation = _display_recommendation(request.user.id)
+    if recommendation == None:
+        recommendation = ""
+    print("the recommendation is ", recommendation)
+
+    
+    # Combine the graphs, the priority category and the recommendation dictionaries
+    context = graphs | priority_category| recommendation
+    print("the context passed to the template is ", context)
 
     # Render the results template
-    return render(request, "puzzle_app/results.html", graph_context)
+    return render(request, "puzzle_app/results.html", context)
 
