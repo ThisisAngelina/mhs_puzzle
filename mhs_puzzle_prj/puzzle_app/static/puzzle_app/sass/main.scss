@@ -16,8 +16,8 @@ $font-family-base: 'Georgia', 'Times New Roman', Times, serif;
 @import '../../../../../node_modules/bootstrap/scss/bootstrap.scss';
 
 
-//TODO
-//background color (buttons
-//fonts
-//icons
-//favicon
+body {
+    background: linear-gradient(to right, $info, $light);
+    min-height: 100vh; // Ensure it covers the full viewport height
+    margin: 0; // Remove default margin
+}

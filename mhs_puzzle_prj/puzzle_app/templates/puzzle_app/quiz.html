@@ -1,7 +1,9 @@
 {% extends 'puzzle_app/layout.html' %}
 {% load static %}
 {% block title %} Quiz {% endblock %}
+
 {% block content %}
+
 <!-- Display messages (success or error alerts) -->
 {% if messages %}
     {% for message in messages %}
@@ -14,14 +16,15 @@
     <div class="progress-bar" role="progressbar" aria-valuenow="{{ progress }}" aria-valuemin="0" aria-valuemax="100" style="width: {{ progress }}%;"></div>
 </div>
 
+
 <!-- Quiz content -->
-<form id="questionForm" method="POST" action="{% url 'quiz' %}">
+<form id="questionForm" method="POST" action="{% url 'quiz' %}" class="text-center">
     {% csrf_token %}
     
     <!-- Display category and group text (for Nutrition questions) -->
     <h2>{{ category }}</h2>
     {% if group_text %}
-        <p>{{ group_text }}</p> <!-- For Nutrition questions, displayed as a group -->
+        <p class="fw-bold">{{ group_text }}</p> <!-- For Nutrition questions, displayed as a group -->
     {% endif %}
 
 
@@ -79,8 +82,16 @@
     </div>
 </form>
 
+<!-- Image -->
+<div class="d-flex justify-content-center align-items-center mt-1 mb-0">
+    <img src="{% static 'puzzle_app/images/hands.png' %}" 
+         alt="People's hands (decorative)" 
+         class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
+
 <!-- Link to JavaScript file -->
 <script src="{% static 'puzzle_app/js/question_view.js' %}"></script>
+
 
 {% endblock %}
 

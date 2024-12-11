@@ -1,4 +1,6 @@
 import openai 
+import markdown
+from django.utils.html import mark_safe
 
 #TODO to move to environ variables before deploying/publishing on GitHub
 openai.api_key = "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"
@@ -23,7 +25,7 @@ def _generate_recommendation(user_data):
   f"and the scores for the other areas of their life are the following (with 0 being the minimum and 100 being the maximum):  {category_scores} "
   f"in particular, they gave the following answers to the {priority_category} category: {answers_of_priority_category}."
   f"Use this information to give specific recommendations."
-  f"Address this patient to tell them how they can work omn their lifestyle step-by-step." 
+  f"Address this patient to tell them how they can work on their lifestyle step-by-step." 
   f"Limit your recommendations to a few sentences. Omit greeting words, such as 'hello'." 
   )
   response = openai.chat.completions.create(
@@ -31,4 +33,10 @@ def _generate_recommendation(user_data):
         messages = [{"role": "user", "content": prompt}]
     )
 
-  return response.choices[0].message.content.strip()
+  markdown_output = response.choices[0].message.content.strip()
+
+  # Convert Markdown to HTML
+  html_output = markdown.markdown(markdown_output)
+
+  # Use mark_safe to ensure the HTML can be safely rendered in Django templates
+  return mark_safe(html_output)

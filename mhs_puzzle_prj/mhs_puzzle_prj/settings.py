@@ -166,5 +166,6 @@ DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 #SESSION_COOKIE_SECURE = True  # Ensures cookies are only sent over HTTPS
 #SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
 #SESSION_COOKIE_SAMESITE = "Lax"  # Helps prevent CSRF attacks
+LOGIN_URL = '/login'
 
 CRISPY_TEMPLATE_PACK = 'bootstrap5'

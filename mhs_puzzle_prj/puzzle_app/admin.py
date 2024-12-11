@@ -8,10 +8,6 @@ from .models import (
     Answer,
     QuestionResult,
     CategoryResult,
-    AreaResult,
-    Focus,
-    Recommendation,
-    Prompt,
 )
 
 # Registering models with the Django admin site
@@ -23,7 +19,3 @@ admin.site.register(Question)
 admin.site.register(Answer)
 admin.site.register(QuestionResult)
 admin.site.register(CategoryResult)
-admin.site.register(AreaResult)
-admin.site.register(Focus)
-admin.site.register(Recommendation)
-admin.site.register(Prompt)

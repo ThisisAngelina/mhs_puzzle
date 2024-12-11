@@ -11,19 +11,79 @@
     {% endfor %}
 {% endif %}
 
+<!-- Div 1 of 4: Context -->
+<div>
 <!-- Text -->
 <div class="text-center mt-3">
-    <h2 style="font-style: italic;"> 
-        Test how you are doing along the three pillars of skin health.<br>
-        See your results visually. Get personalized recommendations.
-    </h2>
+    <h3 style="font-style: italic;"> 
+        The skin is our largest organ and reflects our overal health and lifestyle
+    </h3>
 </div>
 
 <!-- Image -->
 <div class="d-flex justify-content-center align-items-center mt-5 mb-4">
-    <img src="{% static 'puzzle_app/images/three_pillars.jpg' %}" 
-         alt="The three pillars of skin health according to MHS" 
+    <img src="{% static 'puzzle_app/images/home_page.png' %}" 
+         alt="The pillars of skin health according to MHS" 
          class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
+</div>
+
+<!-- Div 2 of 4: Quiz -->
+<div>
+<!-- Text -->
+<div class="text-center mt-3">
+    <h3 style="font-style: italic;"> 
+        Test how you are doing in the areas that are impacting your skin.
+    </h3>
+</div>
+
+<!-- Image -->
+<div class="d-flex justify-content-center align-items-center mt-5 mb-4">
+    <img src="{% static 'puzzle_app/images/quiz.png' %}" 
+         alt="The pillars of skin health according to MHS" 
+         class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
+</div>
+
+<!-- Button to start quiz -->
+<div class="text-center mt-4 mb-5">
+    <a href="{% url 'quiz' %}" class="btn btn-primary btn-lg">
+        Take Skin Quiz
+    </a>
+</div>
+
+<!-- Div 3 of 4: Graph samples -->
+<div>
+<!-- Text -->
+<div class="text-center mt-3">
+    <h3 style="font-style: italic;"> 
+        See your results visually:
+    </h3>
+</div>
+
+<!-- Image -->
+<div class="d-flex justify-content-center align-items-center mt-5 mb-4">
+    <img src="{% static 'puzzle_app/images/wheel_of_life_sample.png' %}" 
+         alt="The pillars of skin health according to MHS" 
+         class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
+</div>
+
+<!-- Div 4 of 4: Recommendation sample -->
+<div>
+<!-- Text -->
+<div class="text-center mt-3">
+    <h3 style="font-style: italic;"> 
+        And get personalized recommendations:
+    </h3>
+</div>
+
+<!-- Image -->
+<div class="d-flex justify-content-center align-items-center mt-5 mb-4">
+    <img src="{% static 'puzzle_app/images/recommendations.png' %}" 
+         alt="The pillars of skin health according to MHS" 
+         class="img-fluid rounded" style="max-width: 100%; height: auto;">
+</div>
 </div>
 
 <!-- Button to start quiz -->

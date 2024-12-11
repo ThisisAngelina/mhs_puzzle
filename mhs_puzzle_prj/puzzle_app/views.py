@@ -32,7 +32,7 @@ def quiz(request):
 
     current_index = request.session.get('current_question_index', 0)
     user_answers = request.session.get('user_answers', {}) #storing the dictionary with the answers in the session 
-
+    #TODO use the _load_questions() function instead
     # Fetch cached questions from Redis
     questions_cache_key = "quiz_questions"
     cached_questions = cache.get(questions_cache_key)
@@ -137,7 +137,6 @@ def display_results(request):
 
     # Graphs
     graphs = _display_graphs(request.user.id)
-    print("the context to pass to the template is ", graphs)
     
     if not graphs:
         # if there are no graphs to display
@@ -157,7 +156,6 @@ def display_results(request):
     
     # Combine the graphs, the priority category and the recommendation dictionaries
     context = graphs | priority_category| recommendation
-    print("the context passed to the template is ", context)
 
     # Render the results template
     return render(request, "puzzle_app/results.html", context)
@@ -184,7 +182,7 @@ class CustomLoginView(LoginView):
         return super().form_valid(form)
 
     def get_success_url(self):
-        return redirect('quiz')
+        return reverse_lazy('quiz')
 
 class CustomLogoutView(LogoutView):
     ''' Customize Django's built-in LogoutView class with custom rerouting and message'''

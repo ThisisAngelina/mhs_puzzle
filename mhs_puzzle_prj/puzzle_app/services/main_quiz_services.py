@@ -26,7 +26,6 @@ def _load_questions():
         questions = Question.objects.select_related('category', 'category__area').prefetch_related(
             Prefetch('answer_set', queryset=Answer.objects.all())
         )
-        print("questions got fetched from the db")
 
         # Serialize all questions into JSON-like structures
         questions_dict = {
@@ -45,7 +44,6 @@ def _load_questions():
 
         # Cache serialized data
         cache.set(questions_cache_key, json.dumps(questions_dict), timeout=60 * 60 * 24 * 30)  # Cache for 30 days
-        print("Questions cached in Redis are ", questions_dict)
 
 
     # Set question count
@@ -68,6 +66,7 @@ def _process_scores(user, user_answers):
     gauge_graphs = {}  # Dictionary to store graph images as byte streams
     wheel_of_life = {}  # Dictionary to construct the Wheel of Life later
 
+    #TODO used the _load_questions() func
     # Deserialize cached questions
     cached_questions_data = json.loads(cached_questions) if cached_questions else {}
     category_scores = {}  # Temporary storage for category scores and formulas
@@ -144,6 +143,7 @@ def _process_scores(user, user_answers):
     answers_of_priority_category = {}
     for question_id, data in cached_questions_data.items():
         if data["category"] == priority_category and str(question_id) in user_answers:
+            print("_process_scores: question of the category identified, passing it to the dictionary to use in recomm generation")
             selected_answer_score = user_answers[str(question_id)]
             selected_answer = next(
                 (answer for answer in data["answers"] if answer["score"] == selected_answer_score), None
@@ -222,7 +222,7 @@ def _display_priority_category(user_id):
         priority_category = cache.get(priority_category_cache_key)
     except Exception as e:
             print("Error retrieving priority category from cache", e)
-            return None
+            return {"priority_category": "Keep working on your lifestyle"}
     return {"priority_category": priority_category}
 
 def _display_recommendation(user_id):
