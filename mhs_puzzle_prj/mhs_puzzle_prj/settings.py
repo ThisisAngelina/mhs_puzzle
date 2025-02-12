@@ -1,6 +1,7 @@
 import sys
 from dotenv import load_dotenv
 import os
+import logging
 
 load_dotenv()
 
@@ -173,3 +174,10 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = "angelina.chigrinetc.dev@gmail.com"  # Replace with your email
 EMAIL_HOST_PASSWORD = os.getenv("EMAIL_HOST_PASSWORD")
 DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Logger
+
+logging.basicConfig(
+    level=logging.INFO,  # getting logs of levels (WARNING, ERROR, CRITICAL)
+    format="%(asctime)s - %(levelname)s - %(message)s",  # Log format
+)

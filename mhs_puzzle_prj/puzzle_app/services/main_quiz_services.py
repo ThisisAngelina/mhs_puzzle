@@ -3,6 +3,7 @@ import json
 import base64
 from io import BytesIO
 import matplotlib.pyplot as plt
+import logging
 
 from django.db.models import Prefetch
 from django.core.cache import cache
@@ -11,6 +12,8 @@ from ..models import Question, Category, CategoryResult, Answer
 
 from .graph_services import _draw_life_wheel, _draw_single_gauge
 from .recommendation_services import _generate_recommendation
+
+logger = logging.getLogger(__name__)
 
 def _load_questions():
     ''' Gets quiz questions form cache in the form of a dictionary stored in cached_questions - Prefetch questions and answers, serialize them, and store in Redis. '''
@@ -91,7 +94,7 @@ def _process_scores(user, user_answers):
                 question_score = float(user_answers[str(question_id)])
                 category_scores[category_name]["values"][alphabetic_id] = question_score
             except Exception as e:
-                print(f"error processing question {alphabetic_id}: {e}")
+                logger.error(f"error processing question {alphabetic_id}: {e}")
     # Process each category's data
     for category_name, category_data in category_scores.items():
         formula = category_data["formula"]
@@ -101,16 +104,16 @@ def _process_scores(user, user_answers):
         try:
             # Evaluate the formula
             category_score = eval(formula, {}, values)
-            print(f"the score for the {category_name} category is {category_score}")
+            logger.info(f"the score for the {category_name} category is {category_score}")
 
 
             # Save the category score to the database
             try:
                 category_obj = Category.objects.get(name=category_name)
                 CategoryResult.objects.create(user=user, category=category_obj, score=category_score)
-                print("the category score has been successfully saved")
+        
             except Category.DoesNotExist:
-                print(f"Category '{category_name}' not found in the database.")
+                logger.error(f"Category '{category_name}' not found in the database.")
                 continue
 
             if area_name != "Esthetic":
@@ -120,13 +123,12 @@ def _process_scores(user, user_answers):
                 gauge_plot.savefig(gauge_img_bytes, format="jpeg", transparent=True, bbox_inches="tight")
                 plt.close(gauge_plot)  # Close the plot to free memory
                 gauge_graphs[category_name] = gauge_img_bytes.getvalue()  # Store the byte stream in the cache
-                print("the gauge graphs have been constructed successfully")
                 # Append the category's name and score to the dictionary used to make the Wheel of Life
                 wheel_of_life[category_name] = round(category_score, 2)
 
         except Exception as e:
             category_score = 50.0
-            print(f"Error processing category '{category_name}': {e}")
+            logger.error(f"Error processing category '{category_name}': {e}")
 
 
     # Establish the priority area:
@@ -162,7 +164,7 @@ def _process_scores(user, user_answers):
         plt.close(wheel_of_life_plot)
         wheel_of_life_graph = wheel_plot_bytes.getvalue()  # Store the byte stream in the cache
     except Exception as e:
-        print(f"Error generating the Wheel of Life graph: {e}")
+        logger.error(f"Error generating the Wheel of Life graph: {e}")
         wheel_of_life_graph = None
 
     # Save graphs to cache using user ID
@@ -205,10 +207,10 @@ def _display_graphs(user_id):
            wheel_base64 = base64.b64encode(wheel_of_life_graph_encoded).decode('utf-8')
            wheel_of_life_graph = f"data:image/jpeg;base64,{wheel_base64}"
         except Exception as e:
-            print("Error in decoding the wheel of life image", e)
+            logger.error(f"Error in decoding the wheel of life image: {e}")
 
     else:
-        print("error in grabbing the encoded wheel image from cache")
+        logger.error("error in grabbing the encoded wheel image from cache")
 
     if not gauge_images_data or not wheel_of_life_graph:
         return None
@@ -219,9 +221,9 @@ def _display_priority_category(user_id):
     priority_category_cache_key = "user_{user_id}_pr_category"
     try:
         priority_category = cache.get(priority_category_cache_key)
-        print("line 223. priority category obtained from cache is ", priority_category)
+    
     except Exception as e:
-            print("Error retrieving priority category from cache", e)
+            logger.error(f"Error retrieving priority category from cache: {e}")
             return "Keep working on your lifestyle"
     return priority_category
 
@@ -230,6 +232,6 @@ def _display_recommendation(user_id):
     try:
         recommendation = cache.get(recommendation_cache_key)
     except Exception as e:
-            print("Error retrieving recommendation from cache", e)
+            logger.error(f"Error retrieving recommendation from cache: {e}")
             return None
     return recommendation

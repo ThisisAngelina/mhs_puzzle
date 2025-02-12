@@ -1,4 +1,5 @@
 import json
+import logging
 
 from django.db.models import Prefetch
 from django.core.cache import cache
@@ -18,9 +19,12 @@ from .forms import HelpForm
 from django.contrib.auth.models import User
 from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs, _display_priority_category, _display_recommendation
 
+logger = logging.getLogger(__name__)
+
 #display the home page
 def home(request):
     ''' The home page just displays a welcome image and a button to start the quiz'''
+    logger.info("logger check")
     return render(request, 'puzzle_app/home.html')
 
 
@@ -142,12 +146,13 @@ def display_results(request):
     priority_category = _display_priority_category(request.user.id)
     if priority_category == None:
         priority_category = ""
-    print("the priority category is ", priority_category)
+    logger.info(f"the priority category is {priority_category}")
 
     recommendation = _display_recommendation(request.user.id)
     if recommendation == None:
         recommendation = ""
-    print("the recommendation is ", recommendation)
+    logger.info(f"the recommendation is {recommendation}")
+
 
     
     # Combine the graphs, the priority category and the recommendation dictionaries
