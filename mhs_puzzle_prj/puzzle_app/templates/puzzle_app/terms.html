@@ -1,0 +1,45 @@
+{% extends "puzzle_app/layout.html" %}
+{% block content%}
+    <h1>Terms and Conditions</h1>
+    <p><strong>Effective Date:</strong> February 12, 2025</p>
+    <p>Welcome to <strong>My Healthy Skin Diagnostic</strong>. These terms and conditions outline the rules and regulations for the use of this website and service.</p>
+    
+    <h2>1. General Information</h2>
+    <p><strong>Service Name:</strong> My Healthy Skin Diagnostic</p>
+    <p><strong>Service Description:</strong> A quiz that evaluates the user's lifestyle and its impact on skin health.</p>
+    <p><strong>Project Owner:</strong> Angelina Chigrinets</p>
+    <p><strong>Effective Date:</strong> February 12, 2025</p>
+    
+    <h2>2. User Responsibilities</h2>
+    <p>By using this service, you agree to comply with the following responsibilities:</p>
+    <ul>
+        <li>You must not use this service for any unlawful or fraudulent purposes.</li>
+        <li>You must not attempt to disrupt or hack the website.</li>
+        <li>You must not distribute false or misleading information about the service.</li>
+        <li>You must not reproduce, copy, or redistribute any part of the content without permission.</li>
+    </ul>
+    <p><strong>Account Registration:</strong> Users are required to create an account to use the functionality.</p>
+    <p><strong>User-Generated Content:</strong> Not applicable.</p>
+    
+    <h2>3. Payment and Refunds</h2>
+    <p>This service is provided <strong>free of charge</strong>. No payments or financial transactions are involved.</p>
+    
+    <h2>4. Privacy Policy</h2>
+    <p>We take user privacy seriously. For details on how we handle your information, please refer to our <a href="{% url 'privacy' %}">Privacy Policy</a>.</p>
+    
+    <h2>5. Disclaimers and Liability</h2>
+    <ul>
+        <li>This service is provided "as is" without warranties of any kind.</li>
+        <li>We do not guarantee the accuracy of the quiz results or any advice provided.</li>
+        <li>We are not responsible for any actions taken based on the information provided by the service.</li>
+        <li>We reserve the right to modify or discontinue this service at any time.</li>
+    </ul>
+    
+    <h2>6. Governing Law</h2>
+    <p>These Terms and Conditions are governed by the laws of <strong>Italy</strong>.</p>
+    
+    <h2>7. Contact Information</h2>
+    <p>If you have any questions about these Terms, you can contact us at:</p>
+    <p>Email: <a href="mailto:angelina.chigrinetc.dev@gmail.com">angelina.chigrinetc.dev@gmail.com</a></p>
+    <a href="{% url 'help' %}">Or here</a></p>
+{% endblock%}

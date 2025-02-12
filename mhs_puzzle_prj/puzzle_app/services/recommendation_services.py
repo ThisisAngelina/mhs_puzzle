@@ -1,9 +1,11 @@
+from dotenv import load_dotenv
+import os
 import openai 
 import markdown
 from django.utils.html import mark_safe
 
-#TODO to move to environ variables before deploying/publishing on GitHub
-openai.api_key = "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"
+load_dotenv()
+openai.api_key = os.getenv("OPENAI_API_KEY")
 
 def _generate_recommendation(user_data):
   '''Pass the user data (priority category, category scores, exact answers to each question of the priority cateogry) to Chat GPT to generate recomnendations'''

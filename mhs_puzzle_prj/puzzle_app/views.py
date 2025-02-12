@@ -222,3 +222,4 @@ def help(request):
         form = HelpForm()
 
     return render(request, "puzzle_app/help.html", {"form": form})
+

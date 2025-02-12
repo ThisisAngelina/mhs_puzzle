@@ -1,6 +1,7 @@
 from django.urls import path
 from django.contrib.auth import views as auth_views
 from django.views import defaults
+from django.shortcuts import render
 from . import views as v
 
 urlpatterns = [
@@ -15,6 +16,10 @@ urlpatterns = [
     path('password_change', auth_views.PasswordChangeView.as_view(), name='password_change'),
     path('password_change/done', auth_views.PasswordChangeDoneView.as_view(), name='password_change_done'),
     path("help/", v.help, name="help"),
+    path("terms/", lambda request: render(request, "puzzle_app/terms.html"), name="terms"),
+    path("privacy/", lambda request: render(request, "puzzle_app/privacy.html"), name="privacy"),
+    path("references/", lambda request: render(request, "puzzle_app/references.html"), name="references"),
+
 
 ]
 
