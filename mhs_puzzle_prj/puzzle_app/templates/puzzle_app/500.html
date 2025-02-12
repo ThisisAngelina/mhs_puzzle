@@ -1,0 +1,11 @@
+{% extends "puzzle_app/layout.html" %}
+
+{% block title %}Page Not Found{% endblock %}
+
+{% block content %}
+<div style="text-align: center; margin-top: 50px;">
+    <h1>500 - Internal Server Error </h1>
+    <p>Oops! It's not you, it's us. We are fixing this. </p>
+    <a href="{% url 'home' %}" class="btn btn-primary">Go Back Home</a>
+</div>
+{% endblock %}

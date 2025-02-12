@@ -185,3 +185,6 @@ class CustomLogoutView(LogoutView):
     def dispatch(self, request, *args, **kwargs):
         messages.success(request, "Logged out successfully.")
         return super().dispatch(request, *args, **kwargs)
+    
+def custom_404_view(request, exception):
+    return render(request, 'puzzle_app/404.html', status=404)

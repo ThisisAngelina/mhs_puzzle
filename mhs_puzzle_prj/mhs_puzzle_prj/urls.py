@@ -15,6 +15,7 @@ Including another URLconf
     2. Add a URL to urlpatterns:  path('blog/', include('blog.urls'))
 """
 from django.contrib import admin
+from django.views import defaults
 from django.conf import settings
 from django.urls import path, include
 import debug_toolbar
@@ -29,3 +30,10 @@ if settings.DEBUG:
     urlpatterns = [
         path('__debug__/', include(debug_toolbar.urls)),
     ] + urlpatterns
+
+
+# Set Django's built-in error handlers with custom templates
+handler400 = lambda request, exception: defaults.bad_request(request, exception, template_name="puzzle_app/400.html")
+handler403 = lambda request, exception: defaults.permission_denied(request, exception, template_name="puzzle_app/403.html")
+handler404 = lambda request, exception: defaults.page_not_found(request, exception, template_name="puzzle_app/404.html")
+handler500 = lambda request: defaults.server_error(request, template_name="puzzle_app/500.html")
