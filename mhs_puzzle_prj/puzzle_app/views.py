@@ -4,14 +4,17 @@ from django.db.models import Prefetch
 from django.core.cache import cache
 from django.http import HttpResponse
 from django.shortcuts import redirect, render
+from django.core.mail import send_mail
 from django.contrib import messages
 from django.utils.timezone import now
 from django.contrib.auth.forms import UserCreationForm
 from django.contrib.auth.decorators import login_required
 from django.urls import reverse_lazy
 from django.contrib.auth.views import LogoutView, LoginView
+from django.conf import settings
 
 from .models import Question, Category, Answer, QuestionResult, SurveyCompletion
+from .forms import HelpForm
 from django.contrib.auth.models import User
 from .services.main_quiz_services import _load_questions, _process_scores, _display_graphs, _display_priority_category, _display_recommendation
 
@@ -186,5 +189,36 @@ class CustomLogoutView(LogoutView):
         messages.success(request, "Logged out successfully.")
         return super().dispatch(request, *args, **kwargs)
     
-def custom_404_view(request, exception):
+def custom_error_view(request, exception):
     return render(request, 'puzzle_app/404.html', status=404)
+
+
+def help(request):
+    if request.method == "POST":
+        form = HelpForm(request.POST)
+        if form.is_valid():
+            name = form.cleaned_data["name"]
+            email = form.cleaned_data["email"]
+            subject = form.cleaned_data["subject"]
+            message = form.cleaned_data["message"]
+
+            # Compose the email
+            full_message = f"Message from {name} ({email}):\n\n{message}"
+
+            try:
+                send_mail(
+                    subject=f"MHS puzzle app help: {subject}",
+                    message=full_message,
+                    from_email=settings.DEFAULT_FROM_EMAIL,
+                    recipient_list=[settings.EMAIL_HOST_USER],  # Replace with your email
+                    fail_silently=False,
+                )
+                messages.success(request, "Your message has been sent successfully!")
+                return redirect("help")  # Redirect back to the help page
+            except Exception as e:
+                messages.error(request, f"Error sending email: {e}")
+
+    else:
+        form = HelpForm()
+
+    return render(request, "puzzle_app/help.html", {"form": form})

@@ -53,8 +53,6 @@ def _load_questions():
 
 _load_questions() 
 
-#TODO Check if the eval function handles all edge cases, particularly missing values.
-#executing the functions 
 #user is the user object, user_answers is the dictionary {queston id: question score}
 # Pass `user_answers` as a dictionary {question_id: score}
 
@@ -132,7 +130,6 @@ def _process_scores(user, user_answers):
 
 
     # Establish the priority area:
-    print(f"TEST the wheel_of_life_dict is {wheel_of_life}") 
     priority_category = str(min(wheel_of_life, key=wheel_of_life.get))
 
     # Add the necessary data to the dictionary passed later to Chat GPT
@@ -147,7 +144,7 @@ def _process_scores(user, user_answers):
     answers_of_priority_category = {}
     for question_id, data in cached_questions_data.items():
         if data["category"] == priority_category and str(question_id) in user_answers:
-            print("TEST _process_scores: question of the category identified, passing it to the dictionary to use in recomm generation")
+            
             selected_answer_score = user_answers[str(question_id)]
             selected_answer = next(
                 (answer for answer in data["answers"] if answer["score"] == selected_answer_score), None
@@ -175,7 +172,7 @@ def _process_scores(user, user_answers):
     if wheel_of_life_graph:
         cache_key_wheel = f"user_{user.id}_wheel_graph"
         cache.set(cache_key_wheel, wheel_of_life_graph, timeout=60 * 20)  # Store user's Wheel of Life in cache for 20 minutes
-    print("TEST the priority categoryu communicated to chat gpt is ",  user_data_for_gpt["priority_category"])
+    
 
     # Pass the user data to the recommendation-generating function and save the recommendation in cache
     try:
