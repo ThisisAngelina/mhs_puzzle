@@ -23,7 +23,7 @@ def home(request):
     ''' The home page just displays a welcome image and a button to start the quiz'''
     return render(request, 'puzzle_app/home.html')
 
-_load_questions() # Grab quiz questions from the cache
+
 
 # Serve quiz questions, collect answers, call the answer-processing function
 @login_required
@@ -32,23 +32,17 @@ def quiz(request):
 
     current_index = request.session.get('current_question_index', 0)
     user_answers = request.session.get('user_answers', {}) #storing the dictionary with the answers in the session 
-    #TODO use the _load_questions() function instead
+
     # Fetch cached questions from Redis
-    questions_cache_key = "quiz_questions"
-    cached_questions = cache.get(questions_cache_key)
-
-    if not cached_questions:
-        # Handle missing cached questions
-        print("there are no questions in the cache")
-        return render(request, "puzzle_app/error.html", {"message": "Questions not available. Please reload."})
-
+    cached_questions, question_count = _load_questions() # Grab quiz questions from the cache
+    
     # Deserialize cached questions
     questions_dict = json.loads(cached_questions)
     question_ids = list(questions_dict.keys())  # Extract all question IDs
-    
+
     # Display the questions
     if request.method == "GET":
-        if current_index >= len(question_ids):
+        if current_index >= question_count:
             # Handle end of quiz
             request.session['current_question_index'] = 0  # Reset index for future sessions
             # Record quiz completion in the SurveyCompletion model
@@ -155,7 +149,8 @@ def display_results(request):
 
     
     # Combine the graphs, the priority category and the recommendation dictionaries
-    context = graphs | priority_category| recommendation
+    context = {"priority_category": priority_category, "recommendation": recommendation}
+    context = graphs | context
 
     # Render the results template
     return render(request, "puzzle_app/results.html", context)

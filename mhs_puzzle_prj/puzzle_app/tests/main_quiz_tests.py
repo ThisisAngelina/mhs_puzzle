@@ -1,6 +1,6 @@
 import json
 from django.test import TestCase
-from django.contrib.auth.models import User
+from puzzle_app.models import User
 from django.core.cache import cache
 
 from ..models import Area, Category, Question, Answer, CategoryResult

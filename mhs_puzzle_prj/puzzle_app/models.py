@@ -52,7 +52,7 @@ class Question(models.Model):
     content = models.TextField(unique = True)
 
     def __str__(self):
-        return self.content
+        return f"{self.alphabetic_id}: {self.content}"
 
 class Answer(models.Model):
     question = models.ForeignKey(Question, on_delete=models.CASCADE)
@@ -63,7 +63,7 @@ class Answer(models.Model):
         unique_together = ('question', 'answer_text')
 
     def __str__(self):
-        return f"Answer to '{self.question}': {self.answer_text} {self.score}"
+        return f"Answer to '{self.question.alphabetic_id}': {self.answer_text} {self.score}"
 
 class QuestionResult(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)

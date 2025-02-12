@@ -49,7 +49,7 @@ def _load_questions():
     # Set question count
     question_count = len(json.loads(cached_questions) if cached_questions else questions_dict)
 
-
+    return (cached_questions, question_count)
 
 _load_questions() 
 
@@ -66,9 +66,9 @@ def _process_scores(user, user_answers):
     gauge_graphs = {}  # Dictionary to store graph images as byte streams
     wheel_of_life = {}  # Dictionary to construct the Wheel of Life later
 
-    #TODO used the _load_questions() func
+   
     # Deserialize cached questions
-    cached_questions_data = json.loads(cached_questions) if cached_questions else {}
+    cached_questions_data = json.loads(cached_questions) 
     category_scores = {}  # Temporary storage for category scores and formulas
 
     # Prepare category-specific data
@@ -88,8 +88,12 @@ def _process_scores(user, user_answers):
 
         # Populate question scores if the user answered this question
         if str(question_id) in user_answers:
-            question_score = float(user_answers[str(question_id)])
-            category_scores[category_name]["values"][alphabetic_id] = question_score
+
+            try:
+                question_score = float(user_answers[str(question_id)])
+                category_scores[category_name]["values"][alphabetic_id] = question_score
+            except Exception as e:
+                print(f"error processing question {alphabetic_id}: {e}")
     # Process each category's data
     for category_name, category_data in category_scores.items():
         formula = category_data["formula"]
@@ -98,8 +102,6 @@ def _process_scores(user, user_answers):
 
         try:
             # Evaluate the formula
-            print(f"The formula is: {formula}")
-            print(f"The values to plug into the formula are: {values}")
             category_score = eval(formula, {}, values)
             print(f"the score for the {category_name} category is {category_score}")
 
@@ -130,20 +132,22 @@ def _process_scores(user, user_answers):
 
 
     # Establish the priority area:
-    priority_category = min(wheel_of_life, key=wheel_of_life.get)
-    
-    print("the priority category is ", priority_category)
-    cache.set("user_{user.id}_priority_category", priority_category)
+    print(f"TEST the wheel_of_life_dict is {wheel_of_life}") 
+    priority_category = str(min(wheel_of_life, key=wheel_of_life.get))
 
     # Add the necessary data to the dictionary passed later to Chat GPT
     user_data_for_gpt["priority_category"] = priority_category
     user_data_for_gpt["category_scores"] = wheel_of_life
 
+    # save the priority category in cache
+    priority_category_cache_key = "user_{user_id}_pr_category"
+    cache.set(priority_category_cache_key,  priority_category, timeout=60 * 20)
+
     # Extract answers for questions in the priority category (to avoid passing all the user's answers to Chat GPT, to save tokens :)
     answers_of_priority_category = {}
     for question_id, data in cached_questions_data.items():
         if data["category"] == priority_category and str(question_id) in user_answers:
-            print("_process_scores: question of the category identified, passing it to the dictionary to use in recomm generation")
+            print("TEST _process_scores: question of the category identified, passing it to the dictionary to use in recomm generation")
             selected_answer_score = user_answers[str(question_id)]
             selected_answer = next(
                 (answer for answer in data["answers"] if answer["score"] == selected_answer_score), None
@@ -154,7 +158,6 @@ def _process_scores(user, user_answers):
     user_data_for_gpt["answers_of_priority_category"] = answers_of_priority_category
 
     # Generate the Wheel of Life graph
-    print("The data to be used to make the Wheel of Life is the dictionary:", wheel_of_life)
     try:
         wheel_of_life_plot = _draw_life_wheel(wheel_of_life)
         wheel_plot_bytes = BytesIO()
@@ -172,8 +175,7 @@ def _process_scores(user, user_answers):
     if wheel_of_life_graph:
         cache_key_wheel = f"user_{user.id}_wheel_graph"
         cache.set(cache_key_wheel, wheel_of_life_graph, timeout=60 * 20)  # Store user's Wheel of Life in cache for 20 minutes
-
-    print("the data to pass to Chat GPT is ", user_data_for_gpt)
+    print("TEST the priority categoryu communicated to chat gpt is ",  user_data_for_gpt["priority_category"])
 
     # Pass the user data to the recommendation-generating function and save the recommendation in cache
     try:
@@ -217,13 +219,14 @@ def _display_graphs(user_id):
     return {"gauge_images": gauge_images_data, "wheel_image": wheel_of_life_graph}
  
 def _display_priority_category(user_id):
-    priority_category_cache_key = "user_{user_id}_priority_category"
+    priority_category_cache_key = "user_{user_id}_pr_category"
     try:
         priority_category = cache.get(priority_category_cache_key)
+        print("line 223. priority category obtained from cache is ", priority_category)
     except Exception as e:
             print("Error retrieving priority category from cache", e)
-            return {"priority_category": "Keep working on your lifestyle"}
-    return {"priority_category": priority_category}
+            return "Keep working on your lifestyle"
+    return priority_category
 
 def _display_recommendation(user_id):
     recommendation_cache_key = f"user_{user_id}_recommendation"
@@ -232,4 +235,4 @@ def _display_recommendation(user_id):
     except Exception as e:
             print("Error retrieving recommendation from cache", e)
             return None
-    return {"recommendation": recommendation}
+    return recommendation
