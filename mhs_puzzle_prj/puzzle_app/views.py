@@ -1,6 +1,3 @@
-#TODO Figure out how to simulate a user with Selenium - https://www.djangotricks.com/tricks/3bNUzYpfpCRR/
-#TODO make unit tests for all the functions
-
 import json
 
 from django.db.models import Prefetch
@@ -78,7 +75,7 @@ def quiz(request):
             # Non-Nutrition questions
             group_text = None
             nutrition_questions_to_present = []
-            request.session['current_question_index'] = current_index + 1
+            #request.session['current_question_index'] = current_index + 1
 
         return render(request, "puzzle_app/quiz.html", {
             "question": {
@@ -119,6 +116,8 @@ def quiz(request):
                     messages.warning(request, "Oops, please select an answer!")
                     request.session['current_question_index'] = max(0, current_index - 1)  # Prevent negative index
                     return redirect('quiz')
+                
+        request.session['current_question_index'] = current_index + 1 # increment the q index by 1 after the user has submitted a response
         
         # Update session with user answers       
         request.session['user_answers'] = user_answers  # Save updated answers in the session
