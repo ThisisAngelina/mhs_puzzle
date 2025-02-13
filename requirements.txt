@@ -10,6 +10,7 @@ django-crispy-forms==2.3
 django-debug-toolbar==4.4.6
 django-extensions==3.2.3
 django-redis==5.4.0
+gunicorn==23.0.0
 h11==0.14.0
 httpcore==1.0.7
 httpx==0.28.1
@@ -18,6 +19,7 @@ logging==0.4.9.6
 Markdown==3.7
 numpy==2.2.0
 openai==1.57.1
+packaging==24.2
 psycopg2==2.9.10
 pydantic==2.10.3
 pydantic_core==2.27.1

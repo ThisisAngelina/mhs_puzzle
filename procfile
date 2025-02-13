@@ -1,0 +1,1 @@
+web: python mhs_puzzle_prj/manage.py migrate && gunicorn mhs_puzzle_prj.wsgi --log-file -
