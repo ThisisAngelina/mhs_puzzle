@@ -1,0 +1,9 @@
+
+ncdp = whole_grains + legumes + nuts_seeds + vitamin_a_rich_orange_veg + dark_green_leafy_vegetables + other_vegetables + vitamin_a_rich_fruits + citrus + other_fruit
+
+ncdr = soda + max(baked1, baked2, baked3) + other_sweets + processed_meat + max(unprocessed_red_meat_ruminant, unprocessed_red_meat_non_ruminant) + deep_fried_foods + max(instant_noodles,fast_food) + salty_snacks
+
+gdr_raw = (ncdp - ncdr + 9)
+
+gdr = (gdr_raw/18)*100 #the gdr score expressed as a percentage
+                

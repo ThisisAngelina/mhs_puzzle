@@ -2,6 +2,8 @@ import sys
 from dotenv import load_dotenv
 import os
 import logging
+import dj_database_url
+
 
 load_dotenv()
 
@@ -37,11 +39,13 @@ INSTALLED_APPS = [
     'debug_toolbar',
     'crispy_forms',
     'crispy_bootstrap5',
+    'whitenoise.runserver_nostatic', # for static files
 
 ]
 
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
+     'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -76,27 +80,34 @@ TEMPLATES = [
 WSGI_APPLICATION = 'mhs_puzzle_prj.wsgi.application'
 
 
-# Database
-# https://docs.djangoproject.com/en/5.1/ref/settings/#databases
-
 DATABASES = {
+    
+    'default': dj_database_url.config(default=os.getenv('DB_URL'))
+}
+
+'''
+    For development
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
         'NAME': BASE_DIR / 'db.sqlite3',
     }
-}
+'''
 
 
+STATIC_URL = "/static/"  
+STATICFILES_DIRS = [BASE_DIR / "static"]
+STATIC_ROOT = BASE_DIR / "staticfiles"  # handled by whitenoise
+STATICFILES_STORAGE = "whitenoise.storage.CompressedManifestStaticFilesStorage"
 
-# Define the Redis configuration for production vs testing
-REDIS_HOST = "127.0.0.1"
-REDIS_PORT = "6379"  # Redis port
-REDIS_DB = "0"  # Default database for production
 
-
-TEST_REDIS_DB = "1"  # Separate Redis database for tests
+# Define the Redis configuration for DEVELOPMENT vs PRODUCTION
 
 if 'test' in sys.argv:
+    REDIS_HOST = "127.0.0.1"
+    REDIS_PORT = "6379"  # Redis port
+    REDIS_DB = "0"  # Default database for production
+    TEST_REDIS_DB = "1"  # Separate Redis database for tests
+
     CACHES = {
         'default': {
             'BACKEND': 'django.core.cache.backends.redis.RedisCache',
@@ -106,8 +117,8 @@ if 'test' in sys.argv:
 else:
     CACHES = {
         'default': {
-            'BACKEND': 'django.core.cache.backends.redis.RedisCache',
-            'LOCATION': f"redis://{REDIS_HOST}:{REDIS_PORT}/{REDIS_DB}",  #"production" (i.e. manual testing)
+            'BACKEND': 'django_redis.cache.RedisCache',
+            'LOCATION': os.getenv('REDIS_LOCATION'),  #"production" (i.e. manual testing)
     }
     }
 
@@ -156,10 +167,9 @@ STATIC_URL = 'static/'
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
-#TODO activate for production
-#SESSION_COOKIE_SECURE = True  # Ensures cookies are only sent over HTTPS
-#SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
-#SESSION_COOKIE_SAMESITE = "Lax"  # Helps prevent CSRF attacks
+SESSION_COOKIE_SECURE = True  # Ensures cookies are only sent over HTTPS
+SESSION_COOKIE_HTTPONLY = True  # Prevents JavaScript from accessing the session cookie
+SESSION_COOKIE_SAMESITE = "Lax"  # Helps prevent CSRF attacks
 LOGIN_URL = '/login'
 
 CRISPY_ALLOWED_TEMPLATE_PACKS = "bootstrap5"

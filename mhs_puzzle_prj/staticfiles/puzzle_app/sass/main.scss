@@ -1,0 +1,23 @@
+
+// color scheme
+$primary:       #f5af94; 
+$secondary:     #728bff; 
+$success:       #7189c2; 
+$info:          #e4f0ff;
+$warning:       #ff7a6e;
+$danger:        #e84d40;
+$light:         #a8befb;
+$dark:          #7189c2;
+
+
+$font-family-base: 'Georgia', 'Times New Roman', Times, serif;
+
+// import bootstrap
+@import '../../../../../node_modules/bootstrap/scss/bootstrap.scss';
+
+
+body {
+    background: linear-gradient(to right, $info, $light);
+    min-height: 100vh; // Ensure it covers the full viewport height
+    margin: 0; // Remove default margin
+}
