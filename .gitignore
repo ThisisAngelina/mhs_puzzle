@@ -2,3 +2,5 @@ venv/
 .env
 node_modules/
 mhs_puzzle_prj/puzzle_app/tests/test_selenium.py
+db.sqlite3
+data.json
