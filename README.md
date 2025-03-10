@@ -1,5 +1,7 @@
 # My Healthy Skin Diagnostic
 
+## **Deployed [Here](https://myhealthyskin.up.railway.app) **
+
 ## 🏥 About the Project
 **My Healthy Skin Diagnostic** is a Django-based web application that provides users with insights into their lifestyle habits and their potential impact on skin health. The app features a quiz that evaluates various aspects of a user's lifestyle, calculates category scores, builds graphs based on results, and generates personalized recommendations using AI integration.
 
