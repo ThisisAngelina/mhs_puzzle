@@ -17,6 +17,7 @@ httpx==0.28.1
 jiter==0.8.2
 logging==0.4.9.6
 Markdown==3.7
+matplotlib
 numpy==2.2.0
 openai==1.57.1
 packaging==24.2
