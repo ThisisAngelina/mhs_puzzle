@@ -14,9 +14,10 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = False
  
-ALLOWED_HOSTS = ["localhost", "127.0.0.1"]
+ALLOWED_HOSTS = ['myhealthyskin.up.railway.app']
+CSRF_TRUSTED_ORIGINS = ['https://myhealthyskin.up.railway.app']
 
 INTERNAL_IPS = [
     '127.0.0.1',
@@ -45,7 +46,7 @@ INSTALLED_APPS = [
 
 MIDDLEWARE = [
     'debug_toolbar.middleware.DebugToolbarMiddleware',
-     'whitenoise.middleware.WhiteNoiseMiddleware', 
+    'whitenoise.middleware.WhiteNoiseMiddleware', 
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
