@@ -1,1 +1,1 @@
-web: gunicorn mhs_puzzle_prj.puzzle_app.wsgi:application --bind 0.0.0.0:$PORT --log-file -
+web: gunicorn mhs_puzzle_prj.mhs_puzzle_prj.wsgi:application --bind 0.0.0.0:$PORT --log-file -
