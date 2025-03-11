@@ -21,6 +21,7 @@ pydantic==2.10.3
 pydantic_core==2.27.1
 pyparsing==3.2.0
 python-dotenv==1.0.1
+redis
 requests==2.32.3
 six==1.17.0
 sqlparse==0.5.2
